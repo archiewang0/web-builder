@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -46,5 +50,24 @@ a {
   }
   .imgDark {
     display: unset;
+  }
+}
+
+/* Website Builder 自定義樣式 */
+@layer components {
+  .drag-handle {
+    @apply absolute top-0 left-0 right-0 h-2 bg-blue-500 opacity-0 transition-opacity cursor-move;
+  }
+  
+  .drag-handle:hover {
+    @apply opacity-100;
+  }
+  
+  .element-selected {
+    @apply ring-2 ring-blue-500 ring-opacity-50;
+  }
+  
+  .element-hover {
+    @apply ring-1 ring-blue-300 ring-opacity-30;
   }
 }
