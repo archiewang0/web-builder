@@ -6,25 +6,13 @@ import Image, { type ImageProps } from "next/image";
 import { Button } from "@repo/ui/button";
 import styles from "./page.module.css";
 import { example } from "@repo/example";
+import { Components } from "./components";
 
-import WebsiteBuilderEditor from "./web-builder";
 type Props = Omit<ImageProps, "src"> & {
   srcLight: string;
   srcDark: string;
 };
 
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
-
-  console.log("example: ", example);
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
-};
-
 export default function Home() {
-  return <WebsiteBuilderEditor />;
+  return <Components />;
 }

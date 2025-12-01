@@ -8,10 +8,11 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  /* set prefers-color-scheme color */
+  /* :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-  }
+  } */
 }
 
 html,
