@@ -1,6 +1,6 @@
 "use client";
-import { PasswordInput } from "../../components/password-input";
-import { Toggle } from "@/components/toggle";
+import { PasswordInput } from "./password-input";
+import { Toggle } from "@/app/components/toggle";
 
 const Components = () => {
   return (

@@ -13,6 +13,6 @@ type Props = Omit<ImageProps, "src"> & {
   srcDark: string;
 };
 
-export default function Home() {
+export function HomeTestPage() {
   return <Components />;
 }

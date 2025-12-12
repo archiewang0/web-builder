@@ -7,7 +7,8 @@ import { Button } from "@repo/ui/button";
 import styles from "./page.module.css";
 import { example } from "@repo/example";
 
-import WebsiteBuilderEditor from "./web-builder";
+import WebsiteBuilderEditor from "./builder/web-builder";
+
 type Props = Omit<ImageProps, "src"> & {
   srcLight: string;
   srcDark: string;
@@ -26,5 +27,10 @@ const ThemeImage = (props: Props) => {
 };
 
 export default function Home() {
-  return <WebsiteBuilderEditor />;
+
+  return <div className=" bg-yellow-600" id="archie-test2">
+    
+    <WebsiteBuilderEditor />
+  
+  </div> 
 }
