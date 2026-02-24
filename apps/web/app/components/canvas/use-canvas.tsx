@@ -7,7 +7,8 @@ export enum ElementEnums {
 }
 
 export function useCanvas () {
-    const [ selectedElement , setSelectedElement ] = useState<ElementEnums | null>(null);
+    // 儲存element id
+    const [ selectedElement , setSelectedElement ] = useState<string | null>(null);
     
     return {
         selectedElement,

@@ -1,10 +1,9 @@
-import { DeviceIdEnums } from "../header/useHeader"
-import { ElementEnums } from "./useCanvas"
+import { DeviceIdEnums } from "../header/use-header"
 
 
 interface PropertyBarProps {
     activeDevice: DeviceIdEnums
-    selectedElement: ElementEnums | null
+    selectedElement: string | null
 }
 
 export function PropertyBar ({ activeDevice , selectedElement }: PropertyBarProps){

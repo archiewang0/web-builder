@@ -2,12 +2,13 @@
 import React from 'react';
 
 import { Header } from '../components/header';
-import { useHeader } from '../components/header/useHeader';
-import { useSidebar } from '../components/sidebar/useSidebar';
+import { useHeader } from '../components/header/use-header';
+import { useSidebar } from '../components/sidebar/use-sidebar';
 import { Sidebar } from '../components/sidebar';
-import { useCanvas } from '../components/canvas/useCanvas';
+import { useCanvas } from '../components/canvas/use-canvas';
 import { Canvas } from '../components/canvas';
 import { PropertySetting } from '../components/property-setting';
+import { SchemaProvider } from '../context/schema-context';
 
 const WebsiteBuilderEditor = () => {
   const { selectedElement , setSelectedElement } = useCanvas()  
@@ -16,41 +17,45 @@ const WebsiteBuilderEditor = () => {
 
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      
-      {/* 頂部工具欄 */}
-      <Header 
-        devices={devices} 
-        activeDevice={activeDevice} 
-        setActiveDevice={setActiveDevice}/>
+    <SchemaProvider>
+      <div className="h-screen flex flex-col bg-gray-50">
 
-      <div className="flex-1 flex overflow-hidden">
+        {/* 頂部工具欄 */}
+        <Header
+          devices={devices}
+          activeDevice={activeDevice}
+          setActiveDevice={setActiveDevice}/>
 
-        {/* 左側組件面板 */}
-        <Sidebar 
-          components={components}
-          setDragEndTaget={setDragEndTaget}
-          setDragStartTaget={setDragStartTaget}
-          />
+        <div className="flex-1 flex overflow-hidden">
 
-        {/* 中央畫布區域 */}
-        <Canvas 
-          devices={devices} 
-          activeDevice={activeDevice} 
-          selectedElement={selectedElement} 
-          setSelectedElement={setSelectedElement} 
+          {/* 左側組件面板 */}
+          <Sidebar
+            components={components}
+            selectedElement={selectedElement}
+            setSelectedElement={setSelectedElement}
+            setDragEndTaget={setDragEndTaget}
+            setDragStartTaget={setDragStartTaget}
+            />
 
-          dragStartTaget={dragStartTaget}
-          dragEndTaget={dragEndTaget}
-          />
+          {/* 中央畫布區域 */}
+          <Canvas
+            devices={devices}
+            activeDevice={activeDevice}
+            selectedElement={selectedElement}
+            setSelectedElement={setSelectedElement}
 
-        {/* 右側屬性面板 */}
-        <PropertySetting 
-          selectedElement={selectedElement}
-          />
+            dragStartTaget={dragStartTaget}
+            dragEndTaget={dragEndTaget}
+            />
 
+          {/* 右側屬性面板 */}
+          <PropertySetting
+            selectedElement={selectedElement}
+            />
+
+        </div>
       </div>
-    </div>
+    </SchemaProvider>
   );
 };
 

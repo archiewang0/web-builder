@@ -1,8 +1,8 @@
-import { ContainerElementSchema, ElementSchema } from ".";
-import { ComponentIdEnums } from "../sidebar/useSidebar";
+import { ContainerElementSchema, ElementSchema } from "../../context/schema-context";
+import { ComponentIdEnums } from "../sidebar/use-sidebar";
 
 // Map 索引節點
-interface ElementNode {
+export interface ElementMapNode {
     element: ElementSchema;
     parent: ContainerElementSchema | null;
     path: number[]; // 在樹中的位置路徑
@@ -37,8 +37,8 @@ interface ElementNode {
 // 建立元素索引 Map
 export function buildElementMap(
     elements: ElementSchema[],
-    map: Map<string, ElementNode> = new Map()
-): Map<string, ElementNode> {
+    map: Map<string, ElementMapNode> = new Map()
+): Map<string, ElementMapNode> {
 
     function traverse(
         elements: ElementSchema[],

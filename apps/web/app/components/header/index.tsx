@@ -1,6 +1,6 @@
 import { Eye, Monitor, Redo, Save, Smartphone, Tablet, Undo } from "lucide-react";
 import { Dispatch , SetStateAction } from "react";
-import { DeviceIdEnums } from "./useHeader";
+import { DeviceIdEnums } from "./use-header";
 
 
 export interface Device {
