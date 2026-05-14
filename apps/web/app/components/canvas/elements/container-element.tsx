@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { ReactElement , JSX } from "react";
-import { ElementSchema } from "..";
+import { ElementSchema } from "@/app/context/schema-context";
 
 
 interface ContainerElementProps {

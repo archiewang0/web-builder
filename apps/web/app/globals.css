@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    --background: #ffffff;
+    --foreground: #171717;
 }
 
 @media (prefers-color-scheme: dark) {
-  /* set prefers-color-scheme color */
-  /* :root {
+    /* set prefers-color-scheme color */
+    /* :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   } */
@@ -17,50 +17,51 @@
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
+    max-width: 100vw;
+    overflow-x: hidden;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+    color: var(--foreground);
+    background: var(--background);
 }
 
-input , select {
-  background: var(--background);
+input,
+select {
+    background: var(--background);
 }
 
 * {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+    color: inherit;
+    text-decoration: none;
 }
 
 .imgDark {
-  display: none;
+    display: none;
 }
 
 @media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+    html {
+        color-scheme: dark;
+    }
 
-  .imgLight {
-    display: none;
-  }
-  .imgDark {
-    display: unset;
-  }
+    .imgLight {
+        display: none;
+    }
+    .imgDark {
+        display: unset;
+    }
 }
 
 /* Website Builder 自定義樣式 */
 @layer components {
-  .drag-handle {
+    /* .drag-handle {
     @apply absolute top-0 left-0 right-0 h-2 bg-blue-500 opacity-0 transition-opacity cursor-move;
   }
   
@@ -74,5 +75,5 @@ a {
   
   .element-hover {
     @apply ring-1 ring-blue-300 ring-opacity-30;
-  }
+  } */
 }
