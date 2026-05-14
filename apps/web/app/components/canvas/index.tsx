@@ -1,42 +1,60 @@
-import { Plus } from "lucide-react";
-import { DeviceIdEnums } from "../header/use-header";
-import { DeviceType } from "../header/use-header";
-import { Dispatch, JSX, SetStateAction } from "react";
-import { ComponentIdEnums } from "../sidebar/use-sidebar";
-import { PropertyBar } from "./property-bar";
-import { ButtonElement , ContainerElement , ImgElement , TextElement } from "./elements";
-import { useSchemaContext, ElementSchema, ContainerElementSchema } from "../../context/schema-context";
+import { Plus } from 'lucide-react';
+import { DeviceIdEnums } from '../header/use-header';
+import { DeviceType } from '../header/use-header';
+import { Dispatch, JSX, SetStateAction } from 'react';
+import { ComponentIdEnums } from '../sidebar/use-sidebar';
+import { PropertyBar } from './property-bar';
+import { ButtonElement, ContainerElement, ImgElement, TextElement } from './elements';
+import {
+    useSchemaContext,
+    ElementSchema,
+    ContainerElementSchema,
+} from '../../context/schema-context';
+import { SchemaElements } from './schema-elements';
 
 interface CanvasProps {
-    devices: DeviceType[]
-    activeDevice: DeviceIdEnums
+    devices: DeviceType[];
+    activeDevice: DeviceIdEnums;
 
-    selectedElement: string | null  // 改為存儲元素 ID
-    setSelectedElement: Dispatch<SetStateAction<string | null>>
+    selectedElement: string | null; // 改為存儲元素 ID
+    setSelectedElement: Dispatch<SetStateAction<string | null>>;
 
-    dragStartTaget: ComponentIdEnums | null
-    dragEndTaget: ComponentIdEnums | null
-
+    // dragStartTaget: ComponentIdEnums | null;
+    // dragEndTaget: ComponentIdEnums | null;
 }
 
-export function Canvas ({ devices , activeDevice , selectedElement , setSelectedElement , dragStartTaget , dragEndTaget }: CanvasProps) {
+export function Canvas({
+    devices,
+    activeDevice,
+    selectedElement,
+    setSelectedElement,
+    // dragStartTaget,
+    // dragEndTaget,
+}: CanvasProps) {
     // 使用 Schema Context
     const { schema, setSchema, elementMap } = useSchemaContext();
 
-    console.log('😍canvas dragStartTaget: ' ,dragStartTaget)
-    console.log('😍canvas dragEndTaget: ' ,dragEndTaget)
-    console.log('selectedElement: ' , selectedElement)
+    // console.log('😍canvas dragStartTaget: ', dragStartTaget);
+    // console.log('😍canvas dragEndTaget: ', dragEndTaget);
+    // console.log('selectedElement: ', selectedElement);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        // 允許放置
         e.dataTransfer.dropEffect = 'copy';
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
 
-        // 獲取拖曳的組件 ID
+        // 守衛：element 重新排序的 drop 由 elementProperty.onDrop + stopPropagation 處理
+        // 若 element 被拖到空白 canvas 區域才會到這裡，直接跳過
+        const draggedElementId = e.dataTransfer.getData('application/element-id');
+        if (draggedElementId) {
+            console.log('⏭️ [canvas handleDrop] element drag 落在空白區域，略過', draggedElementId);
+            return;
+        }
+
+        // 獲取拖曳的組件 ID（來自 sidebar）
         const componentId = e.dataTransfer.getData('text/plain') as ComponentIdEnums;
 
         // 獲取 Canvas 容器的位置資訊
@@ -47,9 +65,9 @@ export function Canvas ({ devices , activeDevice , selectedElement , setSelected
 
         console.log('====== 拖放事件詳細資訊 ======');
         console.log('拖曳的組件 ID:', componentId);
-        console.log('查看 canvasRect: ' , canvasRect)
-        console.log('e.currentTarget: ' , e.currentTarget)
-        console.log('e.target: ' , e.target)
+        console.log('查看 canvasRect: ', canvasRect);
+        console.log('e.currentTarget: ', e.currentTarget);
+        console.log('e.target: ', e.target);
 
         // 生成唯一 ID
         const newElementId = `${componentId}-${Date.now()}`;
@@ -65,26 +83,32 @@ export function Canvas ({ devices , activeDevice , selectedElement , setSelected
                 order: schema.elements.length,
                 oneCol: true,
                 position: { x: dropX, y: dropY },
-                children: []
+                children: [],
             };
         } else {
             // 其他元素（text, image, button）
             newElement = {
                 id: newElementId,
-                componentId: componentId as ComponentIdEnums.text | ComponentIdEnums.image | ComponentIdEnums.button,
+                componentId: componentId as
+                    | ComponentIdEnums.text
+                    | ComponentIdEnums.image
+                    | ComponentIdEnums.button,
                 order: schema.elements.length,
                 position: { x: dropX, y: dropY },
-                content: componentId === ComponentIdEnums.text ? '新增文字' :
-                         componentId === ComponentIdEnums.button ? '按鈕' :
-                         componentId === ComponentIdEnums.image ? 'https://via.placeholder.com/150' : ''
+                content:
+                    componentId === ComponentIdEnums.text
+                        ? '新增文字'
+                        : componentId === ComponentIdEnums.button
+                          ? '按鈕'
+                          : componentId === ComponentIdEnums.image
+                            ? 'https://via.placeholder.com/150'
+                            : '',
             };
         }
-
 
         // 使用 Map 索引快速查找放置目標
         const targetElement = e.target as HTMLElement;
         const targetElementId = targetElement.getAttribute('data-element-id');
-
 
         if (targetElementId) {
             // 從 Map 中 O(1) 快速查找
@@ -109,9 +133,11 @@ export function Canvas ({ devices , activeDevice , selectedElement , setSelected
                     // 情況 1: 放在 Container 上 → 加入到該 Container 的 children
                     console.log('➕ 將元素加入到 Container:', nodeElementId);
 
-                    setSchema(prevSchema => {
+                    setSchema((prevSchema) => {
                         // 深拷貝 schema
-                        const newElements = JSON.parse(JSON.stringify(prevSchema.elements)) as ElementSchema[];
+                        const newElements = JSON.parse(
+                            JSON.stringify(prevSchema.elements)
+                        ) as ElementSchema[];
 
                         // 使用 path 定位到目標 Container（支援深層嵌套）
                         let current: any = newElements;
@@ -134,13 +160,14 @@ export function Canvas ({ devices , activeDevice , selectedElement , setSelected
 
                     console.log('✅ 已加入到 Container 的 children');
                     return;
-
                 } else {
                     // 情況 2: 放在其他元素上（text, button, image）→ 插入到同層級的後面
                     console.log('➕ 插入到元素旁邊:', nodeElementId);
 
-                    setSchema(prevSchema => {
-                        const newElements = JSON.parse(JSON.stringify(prevSchema.elements)) as ElementSchema[];
+                    setSchema((prevSchema) => {
+                        const newElements = JSON.parse(
+                            JSON.stringify(prevSchema.elements)
+                        ) as ElementSchema[];
 
                         if (nodeParent) {
                             // 有父元素：插入到父元素的 children 中
@@ -150,7 +177,9 @@ export function Canvas ({ devices , activeDevice , selectedElement , setSelected
                             for (let i = 0; i < parentPath.length; i++) {
                                 if (i === parentPath.length - 1) {
                                     // 找到父 Container
-                                    const parentContainer = current[parentPath[i]!] as ContainerElementSchema;
+                                    const parentContainer = current[
+                                        parentPath[i]!
+                                    ] as ContainerElementSchema;
                                     const insertIndex = nodePath[nodePath.length - 1]! + 1;
                                     parentContainer.children.splice(insertIndex, 0, newElement);
                                 } else {
@@ -172,135 +201,74 @@ export function Canvas ({ devices , activeDevice , selectedElement , setSelected
                     console.log('✅ 已插入到同層級');
                     return;
                 }
-
             } else {
                 console.log('⚠️ 在 Map 中找不到目標元素:', targetElementId);
             }
-        } 
-
+        }
 
         // 更新 schema，新增元素
-        setSchema(prevSchema => ({
+        setSchema((prevSchema) => ({
             ...prevSchema,
-            elements: [...prevSchema.elements, newElement]
+            elements: [...prevSchema.elements, newElement],
         }));
     };
 
-    function SchemaElementRender(data: ElementSchema): JSX.Element {
-        // 將樣式物件轉換為 React style 物件
-        const styleObj = data.styles || {};
-
-        const elementProperty = {
-            ['data-component-id']: data.componentId,
-            ['data-element-id']: data.id,
-            ['selected-style']: data.id === selectedElement ? 'ring-2 ring-blue-500' : '',
-            onClick: (e: React.MouseEvent) => {
+    return (
+        <main
+            className="flex-1 flex flex-col bg-gray-100 overflow-hidden"
+            onClick={(e) => {
                 e.stopPropagation(); // 防止事件冒泡
-                setSelectedElement(data.id);
-            },
-        }
-
-        // 共用的定位和基礎樣式
-        // const baseStyle: React.CSSProperties = {
-        //     ...styleObj
-        // };
-        // 根據元件類型渲染
-        switch (data.componentId) {
-            case ComponentIdEnums.text:
-                return (
-                    <TextElement 
-                        key={data.id}
-                        id={data.id} 
-                        elementProperty={elementProperty}
-                        content={data.content} />
-                );
-
-            case ComponentIdEnums.image:
-                return (
-                    <ImgElement 
-                        key={data.id}
-                        id={data.id} 
-                        elementProperty={elementProperty}
-                        content={data.content ||'https://via.placeholder.com/150' } />
-                );
-
-            case ComponentIdEnums.button:
-                return <ButtonElement 
-                    key={data.id}
-                    id={data.id} 
-                    elementProperty={elementProperty}
-                    content={data.content} />;
-
-            case ComponentIdEnums.container:
-                return  <ContainerElement 
-                    key={data.id}
-                    id={data.id}
-                    elementProperty={elementProperty}
-                    oneCol={data.oneCol}
-                    SchemaElementRender={SchemaElementRender}
-                    childrenElements={data.children}
-                    />
-
-        }
-    }
-
-
-    return  <main
-        className="flex-1 flex flex-col bg-gray-100 overflow-hidden"
-        onClick={ (e)=>{
-            e.stopPropagation(); // 防止事件冒泡
-            setSelectedElement(null);
-        } }>
-
-        <div
-            className="flex w-full h-full flex-col"
+                setSelectedElement(null);
+            }}
         >
-
-            {/* 可滾動的 canvas 區域 */}
-            <div className="flex-1 overflow-y-auto p-6 flex items-start justify-center">
-                <div
-                    className="bg-white shadow-xl rounded-lg transition-all duration-300 overflow-hidden"
-                    style={{
-                        width: devices.find(d => d.id === activeDevice)?.width,
-                        maxWidth: '100%'
-                    }}>
-
-
-                    {/* 畫布內容區域 */}
+            <div className="flex w-full h-full flex-col">
+                {/* 可滾動的 canvas 區域 */}
+                <div className="flex-1 overflow-y-auto p-6 flex items-start justify-center">
                     <div
-                        id="canvas"
-                        className="p-2 gap-2 flex flex-col relative border-2 border-dashed border-gray-300 rounded-lg min-h-[600px]"
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
+                        className="bg-white shadow-xl rounded-lg transition-all duration-300 overflow-hidden"
+                        style={{
+                            width: devices.find((d) => d.id === activeDevice)?.width,
+                            maxWidth: '100%',
+                        }}
+                    >
+                        {/* 畫布內容區域 */}
+                        <div
+                            id="canvas"
+                            className="p-2 gap-2 flex flex-col relative border-2 border-dashed border-gray-300 rounded-lg min-h-[600px]"
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
                         >
-
-                        {/* 空狀態提示 */}
-                        {
-                            schema.elements.length === 0 &&
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="text-center">
-                                    <Plus className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                    <p className="text-gray-500 text-lg font-medium">拖拽組件到這裡開始設計</p>
-                                    <p className="text-gray-400 text-sm mt-2">或點擊左側組件庫中的元素</p>
+                            {/* 空狀態提示 */}
+                            {schema.elements.length === 0 && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="text-center">
+                                        <Plus className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                        <p className="text-gray-500 text-lg font-medium">
+                                            拖拽組件到這裡開始設計
+                                        </p>
+                                        <p className="text-gray-400 text-sm mt-2">
+                                            或點擊左側組件庫中的元素
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        }
+                            )}
 
-                        {/* 渲染 Schema 中的所有元素 */}
-                        {
-                            schema.elements.map((element) => SchemaElementRender(element))
-                        }
+                            {/* 渲染 Schema 中的所有元素，wrapper 統一做 element drag 事件委派 */}
 
+                            {schema.elements.length > 0 && (
+                                <SchemaElements
+                                    selectedElement={selectedElement}
+                                    setSelectedElement={setSelectedElement}
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
+
+                {/* 底部狀態欄 */}
+                {/* propertybar 要在最底部 */}
+                <PropertyBar selectedElement={selectedElement} activeDevice={activeDevice} />
             </div>
-            
-            {/* 底部狀態欄 */}
-            {/* propertybar 要在最底部 */}
-            <PropertyBar 
-                selectedElement={selectedElement} 
-                activeDevice={activeDevice}/>
-        </div>
-      
-    </main>
+        </main>
+    );
 }
