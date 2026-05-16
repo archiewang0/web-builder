@@ -33,25 +33,21 @@ export function SchemaElements({
     }, [schema.elements, elementMap, draggedId, dropTargetId]);
 
     function SchemaElementRender(data: ElementSchema): JSX.Element {
-        // 將樣式物件轉換為 React style 物件
-        const styleObj = data.styles || {};
-
         const elementProperty = {
             ['data-component-id']: data.componentId,
             ['data-element-id']: data.id,
             ['selected-style']: data.id === selectedElement ? 'ring-2 ring-blue-500' : '',
             draggable: true,
-            style: draggedId === data.id ? { opacity: 0.4 } : undefined,
+            style: {
+                ...(data.styles as React.CSSProperties),
+                ...(draggedId === data.id ? { opacity: 0.4 } : {}),
+            },
             onClick: (e: React.MouseEvent) => {
                 e.stopPropagation();
                 setSelectedElement(data.id);
             },
         };
 
-        // 共用的定位和基礎樣式
-        // const baseStyle: React.CSSProperties = {
-        //     ...styleObj
-        // };
         // 根據元件類型渲染
         switch (data.componentId) {
             case ComponentIdEnums.text:

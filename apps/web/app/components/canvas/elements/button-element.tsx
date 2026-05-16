@@ -8,14 +8,15 @@ interface ButtonElementProps {
 
 export function ButtonElement({ id, content, elementProperty }: ButtonElementProps) {
     return (
-        <button
-            {...elementProperty}
-            className={classNames(
-                'pointer-events-auto cursor-pointer transition-all hover:opacity-50 rounded px-4 py-2',
-                elementProperty['selected-style']
-            )}
-        >
-            {content || '按鈕'}
-        </button>
+        <div {...elementProperty}>
+            <button
+                className={classNames(
+                    'pointer-events-auto cursor-pointer transition-all hover:opacity-50 rounded px-4 py-2',
+                    elementProperty['selected-style']
+                )}
+            >
+                {content || '按鈕'}
+            </button>
+        </div>
     );
 }

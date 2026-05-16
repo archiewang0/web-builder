@@ -1,7 +1,7 @@
-import { ComponentIdEnums } from "../sidebar/use-sidebar";
+import { ComponentIdEnums } from '../sidebar/use-sidebar';
 
 interface ComponentIdProps {
-    componentId: ComponentIdEnums
+    componentId: ComponentIdEnums;
 }
 
 // 獲取元素類型的顯示名稱
@@ -20,15 +20,15 @@ function getElementTypeName(componentId: ComponentIdEnums): string {
     }
 }
 
-export function  ComponentId ({ componentId }: ComponentIdProps) {
-
-    
+export function ComponentId({ componentId }: ComponentIdProps) {
     return (
         <div>
             <label className="block text-xs font-medium text-gray-700 mb-2">元素類型</label>
-            <div className="bg-gray-50 px-3 py-2 rounded border text-sm">
-                {getElementTypeName(componentId)}
+            <div className=" p-2 border border-gray-200 rounded-lg ">
+                <div className="bg-gray-50 px-3 py-2 rounded border text-sm">
+                    {getElementTypeName(componentId)}
+                </div>
             </div>
         </div>
-    )
+    );
 }
