@@ -1,5 +1,5 @@
 import { ElementSchema } from "@/app/context/schema-context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ComponentIdEnums } from "./use-sidebar";
 import { ChevronDown, ChevronRight, Image, Layers, MousePointer2, Square, Type } from "lucide-react";
 
@@ -10,6 +10,7 @@ interface TreeNodeProps {
     depth: number;
     selectedElement: string | null;
     onSelect: (id: string) => void;
+    expandSignal?: { expand: boolean } | null;
 }
 
 // 根據元素類型獲取對應圖標
@@ -44,8 +45,12 @@ function getElementName(element: ElementSchema): string {
     }
 }
 
-export function TreeNode({ element, depth, selectedElement, onSelect }: TreeNodeProps) {
+export function TreeNode({ element, depth, selectedElement, onSelect, expandSignal }: TreeNodeProps) {
     const [isExpanded, setIsExpanded] = useState(true);
+
+    useEffect(() => {
+        if (expandSignal != null) setIsExpanded(expandSignal.expand);
+    }, [expandSignal]);
     const Icon = getElementIcon(element.componentId);
     const hasChildren = element.componentId === ComponentIdEnums.container &&
                         'children' in element &&
@@ -98,6 +103,7 @@ export function TreeNode({ element, depth, selectedElement, onSelect }: TreeNode
                             depth={depth + 1}
                             selectedElement={selectedElement}
                             onSelect={onSelect}
+                            expandSignal={expandSignal}
                         />
                     ))}
                 </div>

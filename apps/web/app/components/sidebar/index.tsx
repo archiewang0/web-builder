@@ -1,8 +1,9 @@
 import { Component } from "./use-sidebar";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { ComponentIdEnums } from "./use-sidebar";
 import { useSchemaContext } from "@/app/context/schema-context";
 import { TreeNode } from "./tree-node";
+import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 
 interface SidebarProps {
     components: Component[]
@@ -15,36 +16,29 @@ interface SidebarProps {
 
 export function Sidebar ({ components , selectedElement, setSelectedElement, setDragStartTaget , setDragEndTaget }: SidebarProps) {
     const { schema } = useSchemaContext();
+    const [treeExpanded, setTreeExpanded] = useState(true);
+    // New object reference on every click so TreeNode's useEffect always fires
+    const [expandSignal, setExpandSignal] = useState<{ expand: boolean } | null>(null);
+
+    const toggleAll = () => {
+        const next = !treeExpanded;
+        setTreeExpanded(next);
+        setExpandSignal({ expand: next });
+    };
 
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, component: Component) => {
         e.dataTransfer.setData('text/plain', component.id);
-        setDragStartTaget(component.id)
+        // Readable via e.dataTransfer.types during dragOver (values are blocked by browser for security)
+        if (component.id !== ComponentIdEnums.container) {
+            e.dataTransfer.setData('application/component-leaf', '1');
+        }
+        setDragStartTaget(component.id);
     };
 
     const handleDragEnd = (_e: React.DragEvent<HTMLDivElement>, component: Component) => {
         setDragEndTaget(component.id)
     };
 
-    // 渲染 Schema 樹
-    const renderSchemaTree = () => {
-        if (schema.elements.length === 0) {
-            return (
-                <p className="text-xs text-gray-400 text-center py-4">
-                    尚無元素
-                </p>
-            );
-        }
-
-        return schema.elements.map((element) => (
-            <TreeNode
-                key={element.id}
-                element={element}
-                depth={0}
-                selectedElement={selectedElement}
-                onSelect={setSelectedElement}
-            />
-        ));
-    };
 
 
     return  <aside className="w-64 bg-white border-r border-gray-200 overflow-y-auto shadow-sm">
@@ -69,9 +63,35 @@ export function Sidebar ({ components , selectedElement, setSelectedElement, set
         
         {/* 頁面結構樹 */}
         <div className="p-4 border-t border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">頁面結構</h2>
+            <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-gray-700">頁面結構</h2>
+                <button
+                    type="button"
+                    onClick={toggleAll}
+                    title={treeExpanded ? '全部收合' : '全部展開'}
+                    className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                    {treeExpanded
+                        ? <ChevronsDownUp className="w-3.5 h-3.5" />
+                        : <ChevronsUpDown className="w-3.5 h-3.5" />
+                    }
+                </button>
+            </div>
             <div className="space-y-0.5">
-                { renderSchemaTree() }
+                {schema.elements.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center py-4">尚無元素</p>
+                ) : (
+                    schema.elements.map((element) => (
+                        <TreeNode
+                            key={element.id}
+                            element={element}
+                            depth={0}
+                            selectedElement={selectedElement}
+                            onSelect={setSelectedElement}
+                            expandSignal={expandSignal}
+                        />
+                    ))
+                )}
             </div>
         </div>
     </aside>

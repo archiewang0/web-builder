@@ -83,8 +83,8 @@ const defaultSchema: CanvasSchema = {
                     order: 1,
                     position: { x: 0, y: 50 },
                     content: '這是一個功能強大的網站編輯器，讓您輕鬆創建美麗的網站',
-                }
-            ]
+                },
+            ],
         },
         {
             id: 'container-2',
@@ -113,8 +113,8 @@ const defaultSchema: CanvasSchema = {
                     order: 2,
                     position: { x: 0, y: 100 },
                     content: '了解更多',
-                }
-            ]
+                },
+            ],
         },
         {
             id: 'container-3',
@@ -143,8 +143,8 @@ const defaultSchema: CanvasSchema = {
                             order: 2,
                             position: { x: 0, y: 100 },
                             content: '了解更多',
-                        }
-                    ]
+                        },
+                    ],
                 },
                 {
                     id: 'container-5',
@@ -173,8 +173,8 @@ const defaultSchema: CanvasSchema = {
                             order: 2,
                             position: { x: 0, y: 100 },
                             content: '了解更多',
-                        }
-                    ]
+                        },
+                    ],
                 },
                 {
                     id: 'container-6',
@@ -203,12 +203,12 @@ const defaultSchema: CanvasSchema = {
                             order: 2,
                             position: { x: 0, y: 100 },
                             content: '了解更多',
-                        }
-                    ]
+                        },
+                    ],
                 },
-            ]
-        }
-    ]
+            ],
+        },
+    ],
 };
 
 // 創建 Context
@@ -221,7 +221,10 @@ interface SchemaProviderProps {
 }
 
 export function SchemaProvider({ children, initialSchema }: SchemaProviderProps) {
-    const [schema, setSchema] = useState<CanvasSchema>(initialSchema || defaultSchema);
+    const [schema, setSchema] = useState<CanvasSchema>(
+        initialSchema || { elements: [] }
+        // || defaultSchema
+    );
 
     // 建立 Map 索引
     const elementMap = useMemo(() => {
@@ -229,97 +232,115 @@ export function SchemaProvider({ children, initialSchema }: SchemaProviderProps)
     }, [schema.elements]);
 
     // 根據 ID 獲取元素
-    const getElementById = useCallback((id: string): ElementSchema | null => {
-        const node = elementMap.get(id);
-        return node?.element || null;
-    }, [elementMap]);
+    const getElementById = useCallback(
+        (id: string): ElementSchema | null => {
+            const node = elementMap.get(id);
+            return node?.element || null;
+        },
+        [elementMap]
+    );
 
     // 更新元素
-    const updateElement = useCallback((id: string, updates: Partial<ElementSchema>) => {
-        const node = elementMap.get(id);
-        if (!node) return;
+    const updateElement = useCallback(
+        (id: string, updates: Partial<ElementSchema>) => {
+            const node = elementMap.get(id);
+            if (!node) return;
 
-        setSchema(prevSchema => {
-            const newElements = JSON.parse(JSON.stringify(prevSchema.elements)) as ElementSchema[];
-            const path = node.path;
+            setSchema((prevSchema) => {
+                const newElements = JSON.parse(
+                    JSON.stringify(prevSchema.elements)
+                ) as ElementSchema[];
+                const path = node.path;
 
-            // 使用 path 定位並更新元素
-            let current: any = newElements;
-            for (let i = 0; i < path.length; i++) {
-                if (i === path.length - 1) {
-                    current[path[i]!] = { ...current[path[i]!], ...updates };
-                } else {
-                    current = current[path[i]!];
-                    if ('children' in current) {
-                        current = current.children;
-                    }
-                }
-            }
-
-            return { elements: newElements };
-        });
-    }, [elementMap]);
-
-    // 刪除元素
-    const deleteElement = useCallback((id: string) => {
-        const node = elementMap.get(id);
-        if (!node) return;
-
-        setSchema(prevSchema => {
-            const newElements = JSON.parse(JSON.stringify(prevSchema.elements)) as ElementSchema[];
-            const path = node.path;
-
-            if (path.length === 1) {
-                // 根層級元素，直接刪除
-                newElements.splice(path[0]!, 1);
-            } else {
-                // 嵌套元素，找到父 Container 並從 children 中刪除
+                // 使用 path 定位並更新元素
                 let current: any = newElements;
-                for (let i = 0; i < path.length - 1; i++) {
-                    current = current[path[i]!];
-                    if ('children' in current) {
-                        current = current.children;
-                    }
-                }
-                current.splice(path[path.length - 1]!, 1);
-            }
-
-            return { elements: newElements };
-        });
-    }, [elementMap]);
-
-    // 新增元素
-    const addElement = useCallback((element: ElementSchema, parentId?: string) => {
-        if (parentId) {
-            const parentNode = elementMap.get(parentId);
-            if (parentNode && parentNode.element.componentId === ComponentIdEnums.container) {
-                setSchema(prevSchema => {
-                    const newElements = JSON.parse(JSON.stringify(prevSchema.elements)) as ElementSchema[];
-                    const path = parentNode.path;
-
-                    let current: any = newElements;
-                    for (let i = 0; i < path.length; i++) {
-                        if (i === path.length - 1) {
-                            const container = current[path[i]!] as ContainerElementSchema;
-                            container.children.push(element);
-                        } else {
-                            current = current[path[i]!];
-                            if ('children' in current) {
-                                current = current.children;
-                            }
+                for (let i = 0; i < path.length; i++) {
+                    if (i === path.length - 1) {
+                        current[path[i]!] = { ...current[path[i]!], ...updates };
+                    } else {
+                        current = current[path[i]!];
+                        if ('children' in current) {
+                            current = current.children;
                         }
                     }
+                }
 
-                    return { elements: newElements };
-                });
+                return { elements: newElements };
+            });
+        },
+        [elementMap]
+    );
+
+    // 刪除元素
+    const deleteElement = useCallback(
+        (id: string) => {
+            const node = elementMap.get(id);
+            if (!node) return;
+
+            setSchema((prevSchema) => {
+                const newElements = JSON.parse(
+                    JSON.stringify(prevSchema.elements)
+                ) as ElementSchema[];
+                const path = node.path;
+
+                if (path.length === 1) {
+                    // 根層級元素，直接刪除
+                    newElements.splice(path[0]!, 1);
+                } else {
+                    // 嵌套元素，找到父 Container 並從 children 中刪除
+                    let current: any = newElements;
+                    for (let i = 0; i < path.length - 1; i++) {
+                        current = current[path[i]!];
+                        if ('children' in current) {
+                            current = current.children;
+                        }
+                    }
+                    current.splice(path[path.length - 1]!, 1);
+                }
+
+                return { elements: newElements };
+            });
+        },
+        [elementMap]
+    );
+
+    // 新增元素
+    const addElement = useCallback(
+        (element: ElementSchema, parentId?: string) => {
+            if (parentId) {
+                const parentNode = elementMap.get(parentId);
+                if (parentNode && parentNode.element.componentId === ComponentIdEnums.container) {
+                    setSchema((prevSchema) => {
+                        const newElements = JSON.parse(
+                            JSON.stringify(prevSchema.elements)
+                        ) as ElementSchema[];
+                        const path = parentNode.path;
+
+                        let current: any = newElements;
+                        for (let i = 0; i < path.length; i++) {
+                            if (i === path.length - 1) {
+                                const container = current[path[i]!] as ContainerElementSchema;
+                                container.children.push(element);
+                            } else {
+                                current = current[path[i]!];
+                                if ('children' in current) {
+                                    current = current.children;
+                                }
+                            }
+                        }
+
+                        return { elements: newElements };
+                    });
+                }
+            } else {
+                // 加到根層級
+                setSchema((prevSchema) => ({
+                    elements: [...prevSchema.elements, element],
+                }));
             }
-        } else {
-            // 加到根層級
-            setSchema(prevSchema => ({
-                elements: [...prevSchema.elements, element]
-            }));
-        }
-    }, [elementMap]);
+        },
+        [elementMap]
+    );
 
     const value: SchemaContextValue = {
         schema,
@@ -331,11 +352,7 @@ export function SchemaProvider({ children, initialSchema }: SchemaProviderProps)
         addElement,
     };
 
-    return (
-        <SchemaContext.Provider value={value}>
-            {children}
-        </SchemaContext.Provider>
-    );
+    return <SchemaContext.Provider value={value}>{children}</SchemaContext.Provider>;
 }
 
 // Hook

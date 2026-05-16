@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import { DeviceIdEnums } from '../header/use-header';
 import { DeviceType } from '../header/use-header';
-import { Dispatch, JSX, SetStateAction } from 'react';
+import { Dispatch, JSX, SetStateAction, useState } from 'react';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
 import { PropertyBar } from './property-bar';
 import { ButtonElement, ContainerElement, ImgElement, TextElement } from './elements';
@@ -34,17 +34,37 @@ export function Canvas({
     // 使用 Schema Context
     const { schema, setSchema, elementMap } = useSchemaContext();
 
-    // console.log('😍canvas dragStartTaget: ', dragStartTaget);
-    // console.log('😍canvas dragEndTaget: ', dragEndTaget);
-    // console.log('selectedElement: ', selectedElement);
+    const [dragHint, setDragHint] = useState<{ x: number; y: number } | null>(null);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
+
+        const isLeafDrag = e.dataTransfer.types.includes('application/component-leaf');
+        if (isLeafDrag) {
+            const insideContainer = (e.target as HTMLElement).closest(
+                `[data-component-id="${ComponentIdEnums.container}"]`
+            );
+            if (!insideContainer) {
+                e.dataTransfer.dropEffect = 'none';
+                setDragHint({ x: e.clientX, y: e.clientY });
+                return;
+            }
+        }
+
         e.dataTransfer.dropEffect = 'copy';
+        setDragHint(null);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        // Only clear when leaving the canvas entirely
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setDragHint(null);
+        }
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
+        setDragHint(null);
 
         // 守衛：element 重新排序的 drop 由 elementProperty.onDrop + stopPropagation 處理
         // 若 element 被拖到空白 canvas 區域才會到這裡，直接跳過
@@ -56,6 +76,10 @@ export function Canvas({
 
         // 獲取拖曳的組件 ID（來自 sidebar）
         const componentId = e.dataTransfer.getData('text/plain') as ComponentIdEnums;
+        const isLeaf =
+            componentId === ComponentIdEnums.text ||
+            componentId === ComponentIdEnums.image ||
+            componentId === ComponentIdEnums.button;
 
         // 獲取 Canvas 容器的位置資訊
         const canvasRect = e.currentTarget.getBoundingClientRect();
@@ -162,6 +186,15 @@ export function Canvas({
                     return;
                 } else {
                     // 情況 2: 放在其他元素上（text, button, image）→ 插入到同層級的後面
+
+                    // 目標在根層級（無父容器），leaf 元素不允許放在這裡
+                    if (!nodeParent && isLeaf) {
+                        e.dataTransfer.dropEffect = 'none';
+
+                        console.warn('⛔ text / image / button 只能放在 Container 內');
+                        return;
+                    }
+
                     console.log('➕ 插入到元素旁邊:', nodeElementId);
 
                     setSchema((prevSchema) => {
@@ -206,7 +239,12 @@ export function Canvas({
             }
         }
 
-        // 更新 schema，新增元素
+        // 落在空白 canvas（根層級）— leaf 元素不允許
+        if (isLeaf) {
+            console.warn('⛔ text / image / button 只能放在 Container 內');
+            return;
+        }
+
         setSchema((prevSchema) => ({
             ...prevSchema,
             elements: [...prevSchema.elements, newElement],
@@ -236,6 +274,7 @@ export function Canvas({
                             id="canvas"
                             className="p-2 gap-2 flex flex-col relative border-2 border-dashed border-gray-300 rounded-lg min-h-[600px]"
                             onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
                         >
                             {/* 空狀態提示 */}
@@ -269,6 +308,15 @@ export function Canvas({
                 {/* propertybar 要在最底部 */}
                 <PropertyBar selectedElement={selectedElement} activeDevice={activeDevice} />
             </div>
+        {dragHint && (
+                <div
+                    className="fixed z-50 flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded shadow-lg pointer-events-none"
+                    style={{ left: dragHint.x + 14, top: dragHint.y + 14 }}
+                >
+                    <span>🚫</span>
+                    <span>只能放在 Container 內</span>
+                </div>
+            )}
         </main>
     );
 }
