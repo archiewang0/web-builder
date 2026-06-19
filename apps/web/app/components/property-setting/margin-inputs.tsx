@@ -1,3 +1,4 @@
+import { CollapsibleSection } from './collapsible-section';
 import { StyleChangeHandler } from './types';
 
 interface MarginInputsProps {
@@ -17,26 +18,26 @@ export function MarginInputs({
     marginRight,
     onChange,
 }: MarginInputsProps) {
+    const resetButton = (
+        <button
+            type="button"
+            onClick={() =>
+                onChange({
+                    marginTop: '0px',
+                    marginBottom: '0px',
+                    marginLeft: '0px',
+                    marginRight: '0px',
+                })
+            }
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+        >
+            Reset
+        </button>
+    );
+
     return (
-        <div>
-            <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-medium text-gray-700">間距設定</label>
-                <button
-                    type="button"
-                    onClick={() =>
-                        onChange({
-                            marginTop: '0px',
-                            marginBottom: '0px',
-                            marginLeft: '0px',
-                            marginRight: '0px',
-                        })
-                    }
-                    className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                    Reset
-                </button>
-            </div>
-            <div className="  p-2 border border-gray-200 rounded-lg ">
+        <CollapsibleSection title="間距設定" headerExtra={resetButton}>
+            <div className="p-2 border border-gray-200 rounded-lg">
                 <div className="grid grid-cols-2 gap-2">
                     <div>
                         <label className="block text-xs text-gray-600 mb-1">上邊距</label>
@@ -76,6 +77,6 @@ export function MarginInputs({
                     </div>
                 </div>
             </div>
-        </div>
+        </CollapsibleSection>
     );
 }

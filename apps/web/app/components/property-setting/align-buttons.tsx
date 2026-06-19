@@ -1,3 +1,4 @@
+import { CollapsibleSection } from './collapsible-section';
 import { StyleChangeHandler } from './types';
 
 interface AlignButtonsProps {
@@ -13,9 +14,8 @@ const ALIGN_OPTIONS = [
 
 export function AlignButtons({ value, onChange }: AlignButtonsProps) {
     return (
-        <div>
-            <label className="block text-xs font-medium text-gray-700 mb-2">對齊方式</label>
-            <div className=" p-2 border border-gray-200 rounded-lg ">
+        <CollapsibleSection title="對齊方式">
+            <div className="p-2 border border-gray-200 rounded-lg">
                 <div className="flex space-x-1">
                     {ALIGN_OPTIONS.map(({ label, css }) => (
                         <button
@@ -32,6 +32,6 @@ export function AlignButtons({ value, onChange }: AlignButtonsProps) {
                     ))}
                 </div>
             </div>
-        </div>
+        </CollapsibleSection>
     );
 }

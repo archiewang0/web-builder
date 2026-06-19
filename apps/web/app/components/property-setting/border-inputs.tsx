@@ -1,3 +1,4 @@
+import { CollapsibleSection } from './collapsible-section';
 import { ColorSwatch } from './color-swatch';
 import { StyleChangeHandler } from './types';
 
@@ -17,9 +18,8 @@ export function BorderInputs({
     onChange,
 }: BorderInputsProps) {
     return (
-        <div>
-            <label className="block text-xs font-medium text-gray-700 mb-2">邊框設定</label>
-            <div className=" p-2 border border-gray-200 rounded-lg  ">
+        <CollapsibleSection title="邊框設定">
+            <div className="p-2 border border-gray-200 rounded-lg">
                 <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                         <span className="text-xs text-gray-600 w-12">寬度</span>
@@ -52,6 +52,6 @@ export function BorderInputs({
                     />
                 </div>
             </div>
-        </div>
+        </CollapsibleSection>
     );
 }

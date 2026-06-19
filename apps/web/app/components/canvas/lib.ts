@@ -104,6 +104,33 @@ export function computeReorder(
     return newElements;
 }
 
+// 依 componentId 建出新元素（pure factory，不依賴 React）
+export function createElement(
+    componentId: ComponentIdEnums,
+    position: { x: number; y: number },
+    order: number
+): ElementSchema {
+    const id = `${componentId}-${Date.now()}`;
+    if (componentId === ComponentIdEnums.container) {
+        return { id, componentId, order, columns: 1, position, children: [] };
+    }
+    const contentMap: Partial<Record<ComponentIdEnums, string>> = {
+        [ComponentIdEnums.text]: '新增文字',
+        [ComponentIdEnums.button]: '按鈕',
+        [ComponentIdEnums.image]: 'https://via.placeholder.com/150',
+    };
+    return {
+        id,
+        componentId: componentId as
+            | ComponentIdEnums.text
+            | ComponentIdEnums.image
+            | ComponentIdEnums.button,
+        order,
+        position,
+        content: contentMap[componentId] ?? '',
+    };
+}
+
 // 建立元素索引 Map
 export function buildElementMap(
     elements: ElementSchema[],

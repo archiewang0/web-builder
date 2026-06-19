@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useSchemaContext, ElementSchema } from '../../context/schema-context';
+import { useSchemaContext, ElementSchema, ContainerElementSchema } from '../../context/schema-context';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
 import { SelectedNone } from './selected-none';
 import { EditSchemaConstructor } from './edit-schema';
 import { useDebouncedCallback } from '@/app/lib/use-debounce';
 import { ContentTextarea } from './content-textarea';
-import { FontSizeOptions } from './font-size-options';
 import { ElementId } from './element-id';
 import { ComponentId } from './component-id';
-import { FontColor } from './font-color';
 import { MarginInputs } from './margin-inputs';
 import { AlignButtons } from './align-buttons';
 import { BorderInputs } from './border-inputs';
 import { StyleChangeHandler } from './types';
+import { FontSetting } from './font-setting';
+import { CollapsibleSection } from './collapsible-section';
+import { ColumnOptions } from './column-options';
 
 export type { StyleChangeHandler };
 
@@ -70,7 +71,15 @@ export function PropertySetting({ selectedElement }: PropertySettingProps) {
         }
     };
 
+    const handleColumnsChange = (columns: number) => {
+        if (selectedElement) {
+            updateElement(selectedElement, { columns } as Partial<ContainerElementSchema>);
+        }
+    };
+
     const elementType = element ? ComponentIdEnums[element.componentId] : null;
+    const containerColumns =
+        element && 'columns' in element ? (element as ContainerElementSchema).columns : 1;
 
     return (
         <aside className="w-80 bg-white border-l border-gray-200 overflow-y-auto shadow-sm">
@@ -88,15 +97,27 @@ export function PropertySetting({ selectedElement }: PropertySettingProps) {
                             />
                         )}
 
-                        <FontSizeOptions
-                            value={localStyles.fontSize}
-                            onChange={handleStyleChange}
-                        />
-                        <FontColor
-                            color={localStyles.color}
-                            backgroundColor={localStyles.backgroundColor}
-                            onChange={handleStyleChange}
-                        />
+                        {elementType !== ComponentIdEnums.container && (
+                            <>
+                                <FontSetting
+                                    fontSize={localStyles.fontSize}
+                                    color={localStyles.color}
+                                    backgroundColor={localStyles.backgroundColor}
+                                    onSizeChange={handleStyleChange}
+                                    onColorChange={handleStyleChange}
+                                />
+                                {/* <FontSizeOptions
+                                    value={localStyles.fontSize}
+                                    onChange={handleStyleChange}
+                                />
+                                <FontColor
+                                    color={localStyles.color}
+                                    backgroundColor={localStyles.backgroundColor}
+                                    onChange={handleStyleChange}
+                                /> */}
+                            </>
+                        )}
+
                         <MarginInputs
                             marginTop={localStyles.marginTop}
                             marginBottom={localStyles.marginBottom}
@@ -105,10 +126,20 @@ export function PropertySetting({ selectedElement }: PropertySettingProps) {
                             onChange={handleStyleChange}
                         />
                         {elementType === ComponentIdEnums.container && (
-                            <AlignButtons
-                                value={localStyles.justifyContent}
-                                onChange={handleStyleChange}
-                            />
+                            <>
+                                <CollapsibleSection title="欄位設定">
+                                    <div className="p-2 border border-gray-200 rounded-lg">
+                                        <ColumnOptions
+                                            value={containerColumns}
+                                            onChange={handleColumnsChange}
+                                        />
+                                    </div>
+                                </CollapsibleSection>
+                                <AlignButtons
+                                    value={localStyles.justifyContent}
+                                    onChange={handleStyleChange}
+                                />
+                            </>
                         )}
                         <BorderInputs
                             borderWidth={localStyles.borderWidth}

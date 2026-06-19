@@ -7,12 +7,16 @@ interface ButtonElementProps {
 }
 
 export function ButtonElement({ id, content, elementProperty }: ButtonElementProps) {
+    const { style, onClick, 'selected-style': selectedStyle, ...divProps } = elementProperty;
+
     return (
-        <div {...elementProperty}>
+        <div {...divProps}>
             <button
+                style={style}
+                onClick={onClick}
                 className={classNames(
-                    'pointer-events-auto cursor-pointer transition-all hover:opacity-50 rounded px-4 py-2',
-                    elementProperty['selected-style']
+                    ' shadow-md pointer-events-auto cursor-pointer transition-all hover:opacity-50 rounded px-4 py-2',
+                    selectedStyle
                 )}
             >
                 {content || '按鈕'}

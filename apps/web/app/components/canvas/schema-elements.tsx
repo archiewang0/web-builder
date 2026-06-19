@@ -86,7 +86,7 @@ export function SchemaElements({
                         key={data.id}
                         id={data.id}
                         elementProperty={elementProperty}
-                        oneCol={data.oneCol}
+                        columns={data.columns}
                         SchemaElementRender={SchemaElementRender}
                         childrenElements={data.children}
                     />

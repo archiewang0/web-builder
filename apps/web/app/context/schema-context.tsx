@@ -35,7 +35,7 @@ export interface LeafElementSchema extends BaseElementSchema {
 // Container 元素（可包含子元素）
 export interface ContainerElementSchema extends BaseElementSchema {
     componentId: ComponentIdEnums.container;
-    oneCol: boolean;
+    columns: number;
     children: ElementSchema[];
 }
 
@@ -67,7 +67,7 @@ const defaultSchema: CanvasSchema = {
             id: 'container-1',
             componentId: ComponentIdEnums.container,
             order: 0,
-            oneCol: true,
+            columns: 1,
             position: { x: 24, y: 24 },
             children: [
                 {
@@ -90,7 +90,7 @@ const defaultSchema: CanvasSchema = {
             id: 'container-2',
             componentId: ComponentIdEnums.container,
             order: 1,
-            oneCol: true,
+            columns: 1,
             position: { x: 24, y: 160 },
             children: [
                 {
@@ -120,7 +120,7 @@ const defaultSchema: CanvasSchema = {
             id: 'container-3',
             componentId: ComponentIdEnums.container,
             order: 3,
-            oneCol: true,
+            columns: 1,
             position: { x: 24, y: 160 },
             children: [
                 {
@@ -128,7 +128,7 @@ const defaultSchema: CanvasSchema = {
                     componentId: ComponentIdEnums.container,
                     order: 0,
                     position: { x: 0, y: 0 },
-                    oneCol: true,
+                    columns: 1,
                     children: [
                         {
                             id: 'text-3-1-1',
@@ -150,7 +150,7 @@ const defaultSchema: CanvasSchema = {
                     id: 'container-5',
                     componentId: ComponentIdEnums.container,
                     order: 0,
-                    oneCol: true,
+                    columns: 1,
                     position: { x: 0, y: 0 },
                     children: [
                         {
@@ -180,7 +180,7 @@ const defaultSchema: CanvasSchema = {
                     id: 'container-6',
                     componentId: ComponentIdEnums.container,
                     order: 0,
-                    oneCol: true,
+                    columns: 1,
                     position: { x: 0, y: 0 },
                     children: [
                         {

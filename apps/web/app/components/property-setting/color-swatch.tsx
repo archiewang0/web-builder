@@ -36,12 +36,20 @@ export interface ColorSwatchProps {
     onCommit: (color: string) => void;
 }
 
-export function ColorSwatch({ label, value, fallbackColor, placeholder, onCommit }: ColorSwatchProps) {
+export function ColorSwatch({
+    label,
+    value,
+    fallbackColor,
+    placeholder,
+    onCommit,
+}: ColorSwatchProps) {
     const [open, setOpen] = useState(false);
     const [draft, setDraft] = useState(value);
     const popoverRef = useRef<HTMLDivElement>(null);
     const commitRef = useRef(onCommit);
     commitRef.current = onCommit;
+
+    // useRef 避免渲染太多次, 這裡要查怎麼避免
 
     // Only sync from parent when picker is closed to avoid render loops
     useEffect(() => {
