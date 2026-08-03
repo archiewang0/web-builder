@@ -12,14 +12,16 @@ interface SchemaElementsProps {
     // schema:
     setSelectedElement: Dispatch<SetStateAction<string | null>>;
     selectedElement: string | null; // 改為存儲元素 ID
+    isPreviewMode?: boolean;
 }
 
 export function SchemaElements({
     // schema
     setSelectedElement,
     selectedElement,
+    isPreviewMode = false,
 }: SchemaElementsProps) {
-    const { schema, setSchema, elementMap } = useSchemaContext();
+    const { schema, setSchema, elementMap, updateElement } = useSchemaContext();
     const [draggedId, setDraggedId] = useState<string | null>(null);
     const [dropTargetId, setDropTargetId] = useState<string | null>(null);
     const { eventLog, logEvent, clearLog, copyAsJSON, copyAsTest } = useEventLogger();
@@ -60,15 +62,23 @@ export function SchemaElements({
                     />
                 );
 
-            case ComponentIdEnums.image:
+            case ComponentIdEnums.image: {
+                const widthValue = data.styles?.width ? parseInt(data.styles.width, 10) : NaN;
                 return (
                     <ImgElement
                         key={data.id}
                         id={data.id}
                         elementProperty={elementProperty}
                         content={data.content || 'https://via.placeholder.com/150'}
+                        widthPercent={Number.isNaN(widthValue) ? 100 : widthValue}
+                        onResizeWidth={(percent) =>
+                            updateElement(data.id, {
+                                styles: { ...data.styles, width: `${percent}%` },
+                            } as Partial<ElementSchema>)
+                        }
                     />
                 );
+            }
 
             case ComponentIdEnums.button:
                 return (
@@ -89,6 +99,7 @@ export function SchemaElements({
                         columns={data.columns}
                         SchemaElementRender={SchemaElementRender}
                         childrenElements={data.children}
+                        isPreviewMode={isPreviewMode}
                     />
                 );
         }

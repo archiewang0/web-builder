@@ -1,4 +1,4 @@
-import { Eye, Monitor, Redo, Save, Smartphone, Tablet, Undo } from "lucide-react";
+import { Eye, EyeOff, Monitor, Redo, Save, Smartphone, Tablet, Undo } from "lucide-react";
 import { Dispatch , SetStateAction } from "react";
 import { DeviceIdEnums } from "./use-header";
 
@@ -14,10 +14,12 @@ interface HeaderProps {
     activeDevice: DeviceIdEnums
     setActiveDevice: Dispatch<SetStateAction<DeviceIdEnums>>
     devices: Device[]
+    isPreviewMode: boolean
+    setIsPreviewMode: Dispatch<SetStateAction<boolean>>
 }
 
 // 頂部工具欄
-export function Header ({ activeDevice , setActiveDevice , devices}: HeaderProps){
+export function Header ({ activeDevice , setActiveDevice , devices, isPreviewMode, setIsPreviewMode }: HeaderProps){
     
     return (
       <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between shadow-sm">
@@ -51,9 +53,16 @@ export function Header ({ activeDevice , setActiveDevice , devices}: HeaderProps
         </div>
         
         <div className="flex items-center space-x-2">
-          <button className="flex items-center space-x-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-            <Eye className="w-4 h-4" />
-            <span className="text-sm">預覽</span>
+          <button
+            onClick={() => setIsPreviewMode((prev) => !prev)}
+            className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+              isPreviewMode
+                ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 hover:bg-gray-200'
+            }`}
+          >
+            {isPreviewMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            <span className="text-sm">{isPreviewMode ? '編輯' : '預覽'}</span>
           </button>
           <button className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors shadow-md">
             <Save className="w-4 h-4" />

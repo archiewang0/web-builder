@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useSchemaContext, ElementSchema, ContainerElementSchema } from '../../context/schema-context';
+import {
+    useSchemaContext,
+    ElementSchema,
+    ContainerElementSchema,
+} from '../../context/schema-context';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
 import { SelectedNone } from './selected-none';
 import { EditSchemaConstructor } from './edit-schema';
@@ -8,12 +12,14 @@ import { ContentTextarea } from './content-textarea';
 import { ElementId } from './element-id';
 import { ComponentId } from './component-id';
 import { MarginInputs } from './margin-inputs';
-import { AlignButtons } from './align-buttons';
+import { FlexAlignSetting } from './flex-align-setting';
 import { BorderInputs } from './border-inputs';
 import { StyleChangeHandler } from './types';
 import { FontSetting } from './font-setting';
 import { CollapsibleSection } from './collapsible-section';
 import { ColumnOptions } from './column-options';
+import { BackgroundSetting } from './background-setting';
+import { ImageSizeSetting } from './image-size-setting';
 
 export type { StyleChangeHandler };
 
@@ -71,15 +77,30 @@ export function PropertySetting({ selectedElement }: PropertySettingProps) {
         }
     };
 
+    // columns（grid）與 justifyContent（flex）互斥：切換其中一個時，另一個自動清成 undefined
     const handleColumnsChange = (columns: number) => {
-        if (selectedElement) {
-            updateElement(selectedElement, { columns } as Partial<ContainerElementSchema>);
-        }
+        if (!selectedElement) return;
+        const newStyles = { ...localStyles, justifyContent: undefined };
+        setLocalStyles(newStyles);
+        updateElement(selectedElement, {
+            columns,
+            styles: newStyles,
+        } as Partial<ContainerElementSchema>);
+    };
+
+    const handleFlexAlignChange = (justifyContent: string) => {
+        if (!selectedElement) return;
+        const newStyles = { ...localStyles, justifyContent };
+        setLocalStyles(newStyles);
+        updateElement(selectedElement, {
+            columns: undefined,
+            styles: newStyles,
+        } as Partial<ContainerElementSchema>);
     };
 
     const elementType = element ? ComponentIdEnums[element.componentId] : null;
     const containerColumns =
-        element && 'columns' in element ? (element as ContainerElementSchema).columns : 1;
+        element && 'columns' in element ? (element as ContainerElementSchema).columns : undefined;
 
     return (
         <aside className="w-80 bg-white border-l border-gray-200 overflow-y-auto shadow-sm">
@@ -97,25 +118,34 @@ export function PropertySetting({ selectedElement }: PropertySettingProps) {
                             />
                         )}
 
-                        {elementType !== ComponentIdEnums.container && (
+                        {(elementType === ComponentIdEnums.text ||
+                            elementType === ComponentIdEnums.button) && (
                             <>
                                 <FontSetting
                                     fontSize={localStyles.fontSize}
                                     color={localStyles.color}
-                                    backgroundColor={localStyles.backgroundColor}
                                     onSizeChange={handleStyleChange}
                                     onColorChange={handleStyleChange}
                                 />
-                                {/* <FontSizeOptions
-                                    value={localStyles.fontSize}
-                                    onChange={handleStyleChange}
-                                />
-                                <FontColor
-                                    color={localStyles.color}
-                                    backgroundColor={localStyles.backgroundColor}
-                                    onChange={handleStyleChange}
-                                /> */}
                             </>
+                        )}
+
+                        {elementType === ComponentIdEnums.image && (
+                            <ImageSizeSetting
+                                width={localStyles.width}
+                                onChange={handleStyleChange}
+                            />
+                        )}
+
+                        {(elementType === ComponentIdEnums.container ||
+                            elementType === ComponentIdEnums.text ||
+                            elementType === ComponentIdEnums.button) && (
+                            <BackgroundSetting
+                                backgroundColor={localStyles.backgroundColor}
+                                backgroundImage={localStyles.backgroundImage}
+                                backgroundSize={localStyles.backgroundSize}
+                                onChange={handleStyleChange}
+                            />
                         )}
 
                         <MarginInputs
@@ -135,9 +165,9 @@ export function PropertySetting({ selectedElement }: PropertySettingProps) {
                                         />
                                     </div>
                                 </CollapsibleSection>
-                                <AlignButtons
+                                <FlexAlignSetting
                                     value={localStyles.justifyContent}
-                                    onChange={handleStyleChange}
+                                    onChange={handleFlexAlignChange}
                                 />
                             </>
                         )}

@@ -17,6 +17,7 @@ export enum DeviceIdEnums {
 export function useHeader () {
 
     const [activeDevice, setActiveDevice] = useState(DeviceIdEnums.desktop);
+    const [isPreviewMode, setIsPreviewMode] = useState(false);
 
     const devices: DeviceType[] = [
         { id: DeviceIdEnums.desktop , name: '桌面', icon: Monitor, width: '100%' },
@@ -27,6 +28,8 @@ export function useHeader () {
     return {
         devices,
         activeDevice,
-        setActiveDevice
+        setActiveDevice,
+        isPreviewMode,
+        setIsPreviewMode
     }
 }

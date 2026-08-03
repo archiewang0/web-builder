@@ -1,7 +1,7 @@
 const COLUMNS = [1, 2, 3, 4, 5];
 
 interface ColumnOptionsProps {
-    value: number;
+    value?: number;
     onChange: (columns: number) => void;
 }
 

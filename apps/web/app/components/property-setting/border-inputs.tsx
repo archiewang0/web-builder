@@ -17,8 +17,24 @@ export function BorderInputs({
     borderColor = '',
     onChange,
 }: BorderInputsProps) {
+    const resetButton = (
+        <button
+            type="button"
+            onClick={() =>
+                onChange({
+                    borderWidth: undefined,
+                    borderRadius: undefined,
+                    borderColor: undefined,
+                })
+            }
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+        >
+            Reset
+        </button>
+    );
+
     return (
-        <CollapsibleSection title="邊框設定">
+        <CollapsibleSection title="邊框設定" headerExtra={resetButton}>
             <div className="p-2 border border-gray-200 rounded-lg">
                 <div className="space-y-2">
                     <div className="flex items-center space-x-2">

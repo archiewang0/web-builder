@@ -35,7 +35,8 @@ export interface LeafElementSchema extends BaseElementSchema {
 // Container 元素（可包含子元素）
 export interface ContainerElementSchema extends BaseElementSchema {
     componentId: ComponentIdEnums.container;
-    columns: number;
+    // undefined = flex 版面（由 justifyContent 控制對齊）；number = grid 版面（欄數），兩者互斥
+    columns?: number;
     children: ElementSchema[];
 }
 

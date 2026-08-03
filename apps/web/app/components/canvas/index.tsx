@@ -1,3 +1,4 @@
+import classNames from 'classnames';
 import { Plus } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 import { DeviceIdEnums, DeviceType } from '../header/use-header';
@@ -11,9 +12,16 @@ interface CanvasProps {
     activeDevice: DeviceIdEnums;
     selectedElement: string | null;
     setSelectedElement: Dispatch<SetStateAction<string | null>>;
+    isPreviewMode?: boolean;
 }
 
-export function Canvas({ devices, activeDevice, selectedElement, setSelectedElement }: CanvasProps) {
+export function Canvas({
+    devices,
+    activeDevice,
+    selectedElement,
+    setSelectedElement,
+    isPreviewMode = false,
+}: CanvasProps) {
     const { schema } = useSchemaContext();
     const { dragHint, handleDragOver, handleDragLeave, handleDrop } = useCanvasDrop();
 
@@ -36,7 +44,10 @@ export function Canvas({ devices, activeDevice, selectedElement, setSelectedElem
                     >
                         <div
                             id="canvas"
-                            className="p-2 gap-2 flex flex-col relative border-2 border-dashed border-gray-300 rounded-lg min-h-[600px]"
+                            className={classNames(
+                                'p-2 gap-2 flex flex-col relative rounded-lg min-h-[600px]',
+                                !isPreviewMode && 'border-2 border-dashed border-gray-300'
+                            )}
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
@@ -58,6 +69,7 @@ export function Canvas({ devices, activeDevice, selectedElement, setSelectedElem
                                 <SchemaElements
                                     selectedElement={selectedElement}
                                     setSelectedElement={setSelectedElement}
+                                    isPreviewMode={isPreviewMode}
                                 />
                             )}
                         </div>

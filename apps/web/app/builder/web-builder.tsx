@@ -12,7 +12,8 @@ import { SchemaProvider } from '../context/schema-context';
 
 const WebsiteBuilderEditor = () => {
     const { selectedElement, setSelectedElement } = useCanvas();
-    const { devices, activeDevice, setActiveDevice } = useHeader();
+    const { devices, activeDevice, setActiveDevice, isPreviewMode, setIsPreviewMode } =
+        useHeader();
     const { components, dragEndTaget, setDragEndTaget, dragStartTaget, setDragStartTaget } =
         useSidebar();
 
@@ -24,17 +25,21 @@ const WebsiteBuilderEditor = () => {
                     devices={devices}
                     activeDevice={activeDevice}
                     setActiveDevice={setActiveDevice}
+                    isPreviewMode={isPreviewMode}
+                    setIsPreviewMode={setIsPreviewMode}
                 />
 
                 <div className="flex-1 flex overflow-hidden">
-                    {/* 左側組件面板 */}
-                    <Sidebar
-                        components={components}
-                        selectedElement={selectedElement}
-                        setSelectedElement={setSelectedElement}
-                        setDragEndTaget={setDragEndTaget}
-                        setDragStartTaget={setDragStartTaget}
-                    />
+                    {/* 左側組件面板：預覽模式下隱藏 */}
+                    {!isPreviewMode && (
+                        <Sidebar
+                            components={components}
+                            selectedElement={selectedElement}
+                            setSelectedElement={setSelectedElement}
+                            setDragEndTaget={setDragEndTaget}
+                            setDragStartTaget={setDragStartTaget}
+                        />
+                    )}
 
                     {/* 中央畫布區域 */}
                     <Canvas
@@ -42,13 +47,14 @@ const WebsiteBuilderEditor = () => {
                         activeDevice={activeDevice}
                         selectedElement={selectedElement}
                         setSelectedElement={setSelectedElement}
+                        isPreviewMode={isPreviewMode}
 
                         // dragStartTaget={dragStartTaget}
                         // dragEndTaget={dragEndTaget}
                     />
 
-                    {/* 右側屬性面板 */}
-                    <PropertySetting selectedElement={selectedElement} />
+                    {/* 右側屬性面板：預覽模式下隱藏 */}
+                    {!isPreviewMode && <PropertySetting selectedElement={selectedElement} />}
                 </div>
             </div>
         </SchemaProvider>

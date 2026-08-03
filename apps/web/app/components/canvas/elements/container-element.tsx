@@ -13,9 +13,10 @@ const GRID_COLS: Record<number, string> = {
 interface ContainerElementProps {
     id: string;
     elementProperty: { [key: string]: any };
-    columns: number;
+    columns?: number;
     childrenElements?: ElementSchema[];
     SchemaElementRender: (data: ElementSchema) => JSX.Element;
+    isPreviewMode?: boolean;
 }
 
 export function ContainerElement({
@@ -24,18 +25,25 @@ export function ContainerElement({
     columns,
     childrenElements,
     SchemaElementRender,
+    isPreviewMode = false,
 }: ContainerElementProps) {
+    const isFlexMode = columns === undefined;
+
     return (
         <div
             key={id}
             {...elementProperty}
             className={classNames(
-                'relative w-full pointer-events-auto rounded-lg p-5 border-2 border-dashed hover:shadow-md cursor-pointer transition-all',
-                columns > 1 && `grid gap-2 ${GRID_COLS[columns] ?? 'grid-cols-2'}`,
-                elementProperty['selected-style'] || 'border-gray-200'
+                'relative w-full pointer-events-auto rounded-lg transition-all',
+                !isPreviewMode && 'p-5 border-2 border-dashed hover:shadow-md cursor-pointer',
+                isFlexMode && 'flex flex-wrap gap-2',
+                !isFlexMode && columns > 1 && `grid gap-2 ${GRID_COLS[columns] ?? 'grid-cols-2'}`,
+                !isPreviewMode && (elementProperty['selected-style'] || 'border-gray-200')
             )}
         >
-            <span className="absolute top-0 left-0 bg-gray-200 !text-xs">{id}</span>
+            {!isPreviewMode && (
+                <span className="absolute top-0 left-0 bg-gray-200 !text-xs">{id}</span>
+            )}
             {childrenElements?.map((child) => SchemaElementRender(child))}
         </div>
     );
