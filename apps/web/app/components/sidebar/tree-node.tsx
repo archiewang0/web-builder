@@ -2,14 +2,13 @@ import { ElementSchema } from "@/app/context/schema-context";
 import { useState, useEffect } from "react";
 import { ComponentIdEnums } from "./use-sidebar";
 import { ChevronDown, ChevronRight, Image, Layers, MousePointer2, Square, Type } from "lucide-react";
+import { useSelectedElementStore } from "@/app/store/use-selected-element-store";
 
 
 // 樹節點組件
 interface TreeNodeProps {
     element: ElementSchema;
     depth: number;
-    selectedElement: string | null;
-    onSelect: (id: string) => void;
     expandSignal?: { expand: boolean } | null;
 }
 
@@ -45,8 +44,10 @@ function getElementName(element: ElementSchema): string {
     }
 }
 
-export function TreeNode({ element, depth, selectedElement, onSelect, expandSignal }: TreeNodeProps) {
+export function TreeNode({ element, depth, expandSignal }: TreeNodeProps) {
     const [isExpanded, setIsExpanded] = useState(true);
+    const selectedElement = useSelectedElementStore((state) => state.selectedElement);
+    const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
 
     useEffect(() => {
         if (expandSignal != null) setIsExpanded(expandSignal.expand);
@@ -68,7 +69,7 @@ export function TreeNode({ element, depth, selectedElement, onSelect, expandSign
                 style={{ paddingLeft: `${depth * 12 + 8}px` }}
                 onClick={(e) => {
                     e.stopPropagation();
-                    onSelect(element.id);
+                    setSelectedElement(element.id);
                 }}
             >
                 {/* 展開/收合按鈕 */}
@@ -101,8 +102,6 @@ export function TreeNode({ element, depth, selectedElement, onSelect, expandSign
                             key={child.id}
                             element={child}
                             depth={depth + 1}
-                            selectedElement={selectedElement}
-                            onSelect={onSelect}
                             expandSignal={expandSignal}
                         />
                     ))}

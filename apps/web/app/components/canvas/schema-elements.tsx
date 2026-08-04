@@ -1,7 +1,8 @@
 import { useSchemaContext } from '@/app/context/schema-context';
 import { ElementSchema } from '@/app/context/schema-context';
-import React, { Dispatch, JSX, SetStateAction, useMemo, useState } from 'react';
+import React, { JSX, useMemo, useState } from 'react';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
+import { useSelectedElementStore } from '@/app/store/use-selected-element-store';
 import { ButtonElement, ContainerElement, ImgElement, TextElement } from './elements';
 import { computeReorder } from './lib';
 import { useEventLogger } from './use-event-logger';
@@ -9,19 +10,13 @@ import { EventLoggerPanel } from './event-logger-panel';
 import { useThrottle } from '@/app/lib/use-throttle';
 
 interface SchemaElementsProps {
-    // schema:
-    setSelectedElement: Dispatch<SetStateAction<string | null>>;
-    selectedElement: string | null; // 改為存儲元素 ID
     isPreviewMode?: boolean;
 }
 
-export function SchemaElements({
-    // schema
-    setSelectedElement,
-    selectedElement,
-    isPreviewMode = false,
-}: SchemaElementsProps) {
+export function SchemaElements({ isPreviewMode = false }: SchemaElementsProps) {
     const { schema, setSchema, elementMap, updateElement } = useSchemaContext();
+    const selectedElement = useSelectedElementStore((state) => state.selectedElement);
+    const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
     const [draggedId, setDraggedId] = useState<string | null>(null);
     const [dropTargetId, setDropTargetId] = useState<string | null>(null);
     const { eventLog, logEvent, clearLog, copyAsJSON, copyAsTest } = useEventLogger();
@@ -38,7 +33,7 @@ export function SchemaElements({
         const elementProperty = {
             ['data-component-id']: data.componentId,
             ['data-element-id']: data.id,
-            ['selected-style']: data.id === selectedElement ? 'ring-2 ring-blue-500' : '',
+            ['selected-style']: data.id === selectedElement ? 'relative z-10 ring-2 ring-blue-500' : '',
             draggable: true,
             style: {
                 ...(data.styles as React.CSSProperties),
@@ -59,6 +54,10 @@ export function SchemaElements({
                         id={data.id}
                         elementProperty={elementProperty}
                         content={data.content}
+                        isSelected={data.id === selectedElement}
+                        onContentChange={(content) =>
+                            updateElement(data.id, { content } as Partial<ElementSchema>)
+                        }
                     />
                 );
 
@@ -69,7 +68,7 @@ export function SchemaElements({
                         key={data.id}
                         id={data.id}
                         elementProperty={elementProperty}
-                        content={data.content || 'https://via.placeholder.com/150'}
+                        content={data.content}
                         widthPercent={Number.isNaN(widthValue) ? 100 : widthValue}
                         onResizeWidth={(percent) =>
                             updateElement(data.id, {

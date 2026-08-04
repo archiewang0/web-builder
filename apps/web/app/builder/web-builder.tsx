@@ -5,13 +5,11 @@ import { Header } from '../components/header';
 import { useHeader } from '../components/header/use-header';
 import { useSidebar } from '../components/sidebar/use-sidebar';
 import { Sidebar } from '../components/sidebar';
-import { useCanvas } from '../components/canvas/use-canvas';
 import { Canvas } from '../components/canvas';
 import { PropertySetting } from '../components/property-setting';
 import { SchemaProvider } from '../context/schema-context';
 
 const WebsiteBuilderEditor = () => {
-    const { selectedElement, setSelectedElement } = useCanvas();
     const { devices, activeDevice, setActiveDevice, isPreviewMode, setIsPreviewMode } =
         useHeader();
     const { components, dragEndTaget, setDragEndTaget, dragStartTaget, setDragStartTaget } =
@@ -34,8 +32,6 @@ const WebsiteBuilderEditor = () => {
                     {!isPreviewMode && (
                         <Sidebar
                             components={components}
-                            selectedElement={selectedElement}
-                            setSelectedElement={setSelectedElement}
                             setDragEndTaget={setDragEndTaget}
                             setDragStartTaget={setDragStartTaget}
                         />
@@ -45,8 +41,6 @@ const WebsiteBuilderEditor = () => {
                     <Canvas
                         devices={devices}
                         activeDevice={activeDevice}
-                        selectedElement={selectedElement}
-                        setSelectedElement={setSelectedElement}
                         isPreviewMode={isPreviewMode}
 
                         // dragStartTaget={dragStartTaget}
@@ -54,7 +48,7 @@ const WebsiteBuilderEditor = () => {
                     />
 
                     {/* 右側屬性面板：預覽模式下隱藏 */}
-                    {!isPreviewMode && <PropertySetting selectedElement={selectedElement} />}
+                    {!isPreviewMode && <PropertySetting />}
                 </div>
             </div>
         </SchemaProvider>

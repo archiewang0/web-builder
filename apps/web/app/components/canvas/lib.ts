@@ -117,7 +117,6 @@ export function createElement(
     const contentMap: Partial<Record<ComponentIdEnums, string>> = {
         [ComponentIdEnums.text]: '新增文字',
         [ComponentIdEnums.button]: '按鈕',
-        [ComponentIdEnums.image]: 'https://via.placeholder.com/150',
     };
     return {
         id,

@@ -7,14 +7,12 @@ import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 
 interface SidebarProps {
     components: Component[]
-    selectedElement: string | null
-    setSelectedElement: Dispatch<SetStateAction<string | null>>
     setDragStartTaget: Dispatch<SetStateAction<ComponentIdEnums | null>>
     setDragEndTaget: Dispatch<SetStateAction<ComponentIdEnums | null>>
 }
 
 
-export function Sidebar ({ components , selectedElement, setSelectedElement, setDragStartTaget , setDragEndTaget }: SidebarProps) {
+export function Sidebar ({ components , setDragStartTaget , setDragEndTaget }: SidebarProps) {
     const { schema } = useSchemaContext();
     const [treeExpanded, setTreeExpanded] = useState(true);
     // New object reference on every click so TreeNode's useEffect always fires
@@ -86,8 +84,6 @@ export function Sidebar ({ components , selectedElement, setSelectedElement, set
                             key={element.id}
                             element={element}
                             depth={0}
-                            selectedElement={selectedElement}
-                            onSelect={setSelectedElement}
                             expandSignal={expandSignal}
                         />
                     ))

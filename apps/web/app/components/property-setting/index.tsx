@@ -1,13 +1,6 @@
-import { useState, useEffect } from 'react';
-import {
-    useSchemaContext,
-    ElementSchema,
-    ContainerElementSchema,
-} from '../../context/schema-context';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
 import { SelectedNone } from './selected-none';
 import { EditSchemaConstructor } from './edit-schema';
-import { useDebouncedCallback } from '@/app/lib/use-debounce';
 import { ContentTextarea } from './content-textarea';
 import { ElementId } from './element-id';
 import { ComponentId } from './component-id';
@@ -20,87 +13,23 @@ import { CollapsibleSection } from './collapsible-section';
 import { ColumnOptions } from './column-options';
 import { BackgroundSetting } from './background-setting';
 import { ImageSizeSetting } from './image-size-setting';
+import { usePropertySetting } from './use-property-setting';
 
 export type { StyleChangeHandler };
 
-interface PropertySettingProps {
-    selectedElement: string | null;
-}
-
-export function PropertySetting({ selectedElement }: PropertySettingProps) {
-    const { getElementById, updateElement, deleteElement } = useSchemaContext();
-
-    const element = selectedElement ? getElementById(selectedElement) : null;
-
-    const [localContent, setLocalContent] = useState<string>('');
-    const [localStyles, setLocalStyles] = useState<NonNullable<ElementSchema['styles']>>({});
-
-    useEffect(() => {
-        if (element && 'content' in element) {
-            setLocalContent(element.content || '');
-        } else {
-            setLocalContent('');
-        }
-        setLocalStyles(element?.styles || {});
-    }, [selectedElement, element]);
-
-    const handleDelete = () => {
-        if (selectedElement) {
-            deleteElement(selectedElement);
-        }
-    };
-
-    const updateContent = useDebouncedCallback((id: string, content: string) => {
-        updateElement(id, { content } as Partial<ElementSchema>);
-    }, 300);
-
-    const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const newValue = e.target.value;
-        setLocalContent(newValue);
-        if (selectedElement) {
-            updateContent(selectedElement, newValue);
-        }
-    };
-
-    const updateStyles = useDebouncedCallback(
-        (id: string, styles: NonNullable<ElementSchema['styles']>) => {
-            updateElement(id, { styles } as Partial<ElementSchema>);
-        },
-        300
-    );
-
-    const handleStyleChange: StyleChangeHandler = (partial) => {
-        const newStyles = { ...localStyles, ...partial };
-        setLocalStyles(newStyles);
-        if (selectedElement) {
-            updateStyles(selectedElement, newStyles);
-        }
-    };
-
-    // columns（grid）與 justifyContent（flex）互斥：切換其中一個時，另一個自動清成 undefined
-    const handleColumnsChange = (columns: number) => {
-        if (!selectedElement) return;
-        const newStyles = { ...localStyles, justifyContent: undefined };
-        setLocalStyles(newStyles);
-        updateElement(selectedElement, {
-            columns,
-            styles: newStyles,
-        } as Partial<ContainerElementSchema>);
-    };
-
-    const handleFlexAlignChange = (justifyContent: string) => {
-        if (!selectedElement) return;
-        const newStyles = { ...localStyles, justifyContent };
-        setLocalStyles(newStyles);
-        updateElement(selectedElement, {
-            columns: undefined,
-            styles: newStyles,
-        } as Partial<ContainerElementSchema>);
-    };
-
-    const elementType = element ? ComponentIdEnums[element.componentId] : null;
-    const containerColumns =
-        element && 'columns' in element ? (element as ContainerElementSchema).columns : undefined;
+export function PropertySetting() {
+    const {
+        element,
+        elementType,
+        containerColumns,
+        localContent,
+        localStyles,
+        handleDelete,
+        handleContentChange,
+        handleStyleChange,
+        handleColumnsChange,
+        handleFlexAlignChange,
+    } = usePropertySetting();
 
     return (
         <aside className="w-80 bg-white border-l border-gray-200 overflow-y-auto shadow-sm">
@@ -124,8 +53,20 @@ export function PropertySetting({ selectedElement }: PropertySettingProps) {
                                 <FontSetting
                                     fontSize={localStyles.fontSize}
                                     color={localStyles.color}
+                                    fontFamily={localStyles.fontFamily}
+                                    fontWeight={localStyles.fontWeight}
                                     onSizeChange={handleStyleChange}
                                     onColorChange={handleStyleChange}
+                                    onFontFamilyChange={handleStyleChange}
+                                    onFontWeightChange={handleStyleChange}
+                                    onReset={() =>
+                                        handleStyleChange({
+                                            fontSize: undefined,
+                                            color: undefined,
+                                            fontFamily: undefined,
+                                            fontWeight: undefined,
+                                        })
+                                    }
                                 />
                             </>
                         )}

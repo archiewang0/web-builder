@@ -1,15 +1,4 @@
-'use client';
-
-import classNames from 'classnames';
 import { useEffect, useRef, useState } from 'react';
-
-interface ImgElementProps {
-    id: string;
-    content?: string;
-    elementProperty: { [key: string]: any };
-    widthPercent?: number;
-    onResizeWidth?: (percent: number) => void;
-}
 
 const MIN_WIDTH_PERCENT = 1;
 
@@ -22,23 +11,18 @@ interface DragState {
     parentWidth: number;
 }
 
-const handleClassName =
-    'absolute top-1/2 -translate-y-1/2 w-2 h-10 rounded-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-ew-resize';
+interface UseImageResizeOptions {
+    widthPercent: number;
+    onResizeWidth?: (percent: number) => void;
+}
 
-export function ImgElement({
-    id,
-    content,
-    elementProperty,
-    widthPercent = 100,
-    onResizeWidth,
-}: ImgElementProps) {
+export function useImageResize({ widthPercent, onResizeWidth }: UseImageResizeOptions) {
     const wrapperRef = useRef<HTMLDivElement>(null);
     const dragStateRef = useRef<DragState | null>(null);
     const latestPercentRef = useRef<number | null>(null);
     const suppressClickRef = useRef(false);
     const [previewPercent, setPreviewPercent] = useState<number | null>(null);
 
-    const { style, ...restProperty } = elementProperty;
     const displayPercent = previewPercent ?? widthPercent;
 
     useEffect(() => {
@@ -112,35 +96,5 @@ export function ImgElement({
         }
     };
 
-    return (
-        <div
-            ref={wrapperRef}
-            {...restProperty}
-            onDragStart={handleDragStart}
-            style={{ ...style, width: `${displayPercent}%` }}
-            className={classNames(
-                'group relative pointer-events-auto cursor-pointer rounded transition-all',
-                elementProperty['selected-style']
-            )}
-        >
-            <img
-                key={id}
-                src={content || 'https://via.placeholder.com/150'}
-                alt="元件圖片"
-                draggable={false}
-                style={{ display: 'block', width: '100%', height: 'auto', borderRadius: style?.borderRadius }}
-                className="pointer-events-auto rounded"
-            />
-            <div
-                draggable={false}
-                onMouseDown={startResize('left')}
-                className={classNames(handleClassName, 'left-0 -translate-x-1/2')}
-            />
-            <div
-                draggable={false}
-                onMouseDown={startResize('right')}
-                className={classNames(handleClassName, 'right-0 translate-x-1/2')}
-            />
-        </div>
-    );
+    return { wrapperRef, displayPercent, startResize, handleDragStart };
 }

@@ -1,8 +1,9 @@
 import classNames from 'classnames';
 import { Plus } from 'lucide-react';
-import { Dispatch, SetStateAction } from 'react';
+import { useEffect } from 'react';
 import { DeviceIdEnums, DeviceType } from '../header/use-header';
 import { useSchemaContext } from '../../context/schema-context';
+import { useSelectedElementStore } from '../../store/use-selected-element-store';
 import { PropertyBar } from './property-bar';
 import { SchemaElements } from './schema-elements';
 import { useCanvasDrop } from './use-canvas-drop';
@@ -10,20 +11,35 @@ import { useCanvasDrop } from './use-canvas-drop';
 interface CanvasProps {
     devices: DeviceType[];
     activeDevice: DeviceIdEnums;
-    selectedElement: string | null;
-    setSelectedElement: Dispatch<SetStateAction<string | null>>;
     isPreviewMode?: boolean;
 }
 
-export function Canvas({
-    devices,
-    activeDevice,
-    selectedElement,
-    setSelectedElement,
-    isPreviewMode = false,
-}: CanvasProps) {
-    const { schema } = useSchemaContext();
+export function Canvas({ devices, activeDevice, isPreviewMode = false }: CanvasProps) {
+    const { schema, deleteElement } = useSchemaContext();
+    const selectedElement = useSelectedElementStore((state) => state.selectedElement);
+    const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
     const { dragHint, handleDragOver, handleDragLeave, handleDrop } = useCanvasDrop();
+
+    useEffect(() => {
+        if (!selectedElement) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+
+            const target = e.target as HTMLElement;
+            const isEditingText =
+                target.tagName === 'INPUT' ||
+                target.tagName === 'TEXTAREA' ||
+                target.isContentEditable;
+            if (isEditingText) return;
+
+            deleteElement(selectedElement);
+            setSelectedElement(null);
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedElement, deleteElement, setSelectedElement]);
 
     return (
         <main
@@ -66,16 +82,12 @@ export function Canvas({
                                 </div>
                             )}
                             {schema.elements.length > 0 && (
-                                <SchemaElements
-                                    selectedElement={selectedElement}
-                                    setSelectedElement={setSelectedElement}
-                                    isPreviewMode={isPreviewMode}
-                                />
+                                <SchemaElements isPreviewMode={isPreviewMode} />
                             )}
                         </div>
                     </div>
                 </div>
-                <PropertyBar selectedElement={selectedElement} activeDevice={activeDevice} />
+                <PropertyBar activeDevice={activeDevice} />
             </div>
 
             {dragHint && (

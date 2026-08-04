@@ -20,7 +20,8 @@
     "next": "16.2.6",
     "react": "^19.2.0",
     "react-colorful": "^5.7.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

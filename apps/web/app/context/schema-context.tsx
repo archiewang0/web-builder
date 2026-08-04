@@ -20,6 +20,8 @@ interface BaseElementSchema {
         backgroundColor?: string;
         color?: string;
         fontSize?: string;
+        fontFamily?: string;
+        fontWeight?: string;
         [key: string]: string | undefined;
     };
     className?: string;
