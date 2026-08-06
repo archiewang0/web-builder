@@ -1,8 +1,8 @@
-import { ElementSchema } from "@/app/context/schema-context";
+import { ElementSchema } from "@/store/use-schema-store";
 import { useState, useEffect } from "react";
 import { ComponentIdEnums } from "./use-sidebar";
 import { ChevronDown, ChevronRight, Image, Layers, MousePointer2, Square, Type } from "lucide-react";
-import { useSelectedElementStore } from "@/app/store/use-selected-element-store";
+import { useSelectedElementStore } from "@/store/use-selected-element-store";
 
 
 // 樹節點組件

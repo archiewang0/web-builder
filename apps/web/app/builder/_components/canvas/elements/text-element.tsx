@@ -2,7 +2,7 @@
 
 import classNames from 'classnames';
 import { useLayoutEffect, useRef } from 'react';
-import { useDebouncedCallback } from '@/app/lib/use-debounce';
+import { useDebouncedCallback } from '@/lib/use-debounce';
 
 interface TextElementProps {
     id: string;

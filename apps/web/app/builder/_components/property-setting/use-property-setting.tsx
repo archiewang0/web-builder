@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
 import {
-    useSchemaContext,
+    useSchemaStore,
     ElementSchema,
     ContainerElementSchema,
-} from '../../context/schema-context';
+} from '@/store/use-schema-store';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
-import { useSelectedElementStore } from '../../store/use-selected-element-store';
-import { useDebouncedCallback } from '@/app/lib/use-debounce';
+import { useSelectedElementStore } from '@/store/use-selected-element-store';
+import { useDebouncedCallback } from '@/lib/use-debounce';
 import { StyleChangeHandler } from './types';
 
 export function usePropertySetting() {
-    const { getElementById, updateElement, deleteElement } = useSchemaContext();
+    const getElementById = useSchemaStore((state) => state.getElementById);
+    const updateElement = useSchemaStore((state) => state.updateElement);
+    const deleteElement = useSchemaStore((state) => state.deleteElement);
     const selectedElement = useSelectedElementStore((state) => state.selectedElement);
 
     const element = selectedElement ? getElementById(selectedElement) : null;

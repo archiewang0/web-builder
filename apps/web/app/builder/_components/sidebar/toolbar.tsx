@@ -1,0 +1,57 @@
+import { Eye, EyeOff, Save } from 'lucide-react';
+import { DEVICES } from '@/components/header/use-header';
+import { useAuthStore } from '@/store/use-auth-store';
+import { useHeaderStore } from '@/store/use-header-store';
+
+// 裝置切換／預覽／儲存：builder 專屬功能，常駐工具列，登入後才顯示
+export function Toolbar() {
+    const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+    const activeDevice = useHeaderStore((state) => state.activeDevice);
+    const setActiveDevice = useHeaderStore((state) => state.setActiveDevice);
+    const isPreviewMode = useHeaderStore((state) => state.isPreviewMode);
+    const setIsPreviewMode = useHeaderStore((state) => state.setIsPreviewMode);
+
+    if (!isLoggedIn) return null;
+
+    return (
+        <div className="p-3 border-b border-gray-100 space-y-2">
+            <div className="justify-center flex items-center gap-1">
+                {DEVICES.map((device) => (
+                    <button
+                        key={device.id}
+                        onClick={() => setActiveDevice(device.id)}
+                        className={`p-2 rounded-lg transition-colors ${
+                            activeDevice === device.id
+                                ? 'bg-blue-500 text-white shadow-md'
+                                : 'hover:bg-gray-100 text-gray-600'
+                        }`}
+                        title={device.name}
+                    >
+                        <device.icon className="w-4 h-4" />
+                    </button>
+                ))}
+            </div>
+            <div className="flex items-center gap-2">
+                <button
+                    onClick={() => setIsPreviewMode((prev) => !prev)}
+                    className={`flex-1 flex items-center justify-center space-x-1.5 px-2 py-1.5 rounded-lg text-sm transition-colors ${
+                        isPreviewMode
+                            ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-md'
+                            : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                >
+                    {isPreviewMode ? (
+                        <EyeOff className="w-4 h-4" />
+                    ) : (
+                        <Eye className="w-4 h-4" />
+                    )}
+                    <span>{isPreviewMode ? '編輯' : '預覽'}</span>
+                </button>
+                <button className="flex-1 flex items-center justify-center space-x-1.5 px-2 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition-colors shadow-md">
+                    <Save className="w-4 h-4" />
+                    <span>儲存</span>
+                </button>
+            </div>
+        </div>
+    );
+}

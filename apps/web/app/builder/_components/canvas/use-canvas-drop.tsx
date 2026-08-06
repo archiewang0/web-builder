@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { useSchemaContext, ElementSchema, ContainerElementSchema } from '../../context/schema-context';
+import { useSchemaStore, ElementSchema, ContainerElementSchema } from '@/store/use-schema-store';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
 import { createElement } from './lib';
 
 export function useCanvasDrop() {
-    const { schema, setSchema, elementMap } = useSchemaContext();
+    const schema = useSchemaStore((state) => state.schema);
+    const setSchema = useSchemaStore((state) => state.setSchema);
+    const elementMap = useSchemaStore((state) => state.elementMap);
     const [dragHint, setDragHint] = useState<{ x: number; y: number } | null>(null);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {

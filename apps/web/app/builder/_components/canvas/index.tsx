@@ -1,21 +1,22 @@
 import classNames from 'classnames';
 import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
-import { DeviceIdEnums, DeviceType } from '../header/use-header';
-import { useSchemaContext } from '../../context/schema-context';
-import { useSelectedElementStore } from '../../store/use-selected-element-store';
+import { DEVICES } from '@/components/header/use-header';
+import { useHeaderStore } from '@/store/use-header-store';
+import { useSchemaStore } from '@/store/use-schema-store';
+import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { PropertyBar } from './property-bar';
 import { SchemaElements } from './schema-elements';
 import { useCanvasDrop } from './use-canvas-drop';
 
 interface CanvasProps {
-    devices: DeviceType[];
-    activeDevice: DeviceIdEnums;
     isPreviewMode?: boolean;
 }
 
-export function Canvas({ devices, activeDevice, isPreviewMode = false }: CanvasProps) {
-    const { schema, deleteElement } = useSchemaContext();
+export function Canvas({ isPreviewMode = false }: CanvasProps) {
+    const activeDevice = useHeaderStore((state) => state.activeDevice);
+    const schema = useSchemaStore((state) => state.schema);
+    const deleteElement = useSchemaStore((state) => state.deleteElement);
     const selectedElement = useSelectedElementStore((state) => state.selectedElement);
     const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
     const { dragHint, handleDragOver, handleDragLeave, handleDrop } = useCanvasDrop();
@@ -54,7 +55,7 @@ export function Canvas({ devices, activeDevice, isPreviewMode = false }: CanvasP
                     <div
                         className="bg-white shadow-xl rounded-lg transition-all duration-300 overflow-hidden"
                         style={{
-                            width: devices.find((d) => d.id === activeDevice)?.width,
+                            width: DEVICES.find((d) => d.id === activeDevice)?.width,
                             maxWidth: '100%',
                         }}
                     >
@@ -87,7 +88,7 @@ export function Canvas({ devices, activeDevice, isPreviewMode = false }: CanvasP
                         </div>
                     </div>
                 </div>
-                <PropertyBar activeDevice={activeDevice} />
+                <PropertyBar />
             </div>
 
             {dragHint && (

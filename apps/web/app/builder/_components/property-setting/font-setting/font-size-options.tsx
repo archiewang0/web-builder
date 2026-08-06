@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useDebouncedCallback } from '@/app/lib/use-debounce';
+import { useDebouncedCallback } from '@/lib/use-debounce';
 import { StyleChangeHandler } from '../types';
 
 export interface FontSizeOptionsProps {

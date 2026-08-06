@@ -1,5 +1,4 @@
 import { Monitor, Smartphone, Tablet } from "lucide-react";
-import { useState } from "react";
 
 export interface DeviceType {
   id: DeviceIdEnums;
@@ -14,22 +13,9 @@ export enum DeviceIdEnums {
     mobile = 'mobile'
 }
 
-export function useHeader () {
-
-    const [activeDevice, setActiveDevice] = useState(DeviceIdEnums.desktop);
-    const [isPreviewMode, setIsPreviewMode] = useState(false);
-
-    const devices: DeviceType[] = [
-        { id: DeviceIdEnums.desktop , name: '桌面', icon: Monitor, width: '100%' },
-        { id: DeviceIdEnums.tablet , name: '平板', icon: Tablet, width: '768px' },
-        { id: DeviceIdEnums.mobile , name: '手機', icon: Smartphone, width: '375px' },
-    ];
-
-    return {
-        devices,
-        activeDevice,
-        setActiveDevice,
-        isPreviewMode,
-        setIsPreviewMode
-    }
-}
+// 裝置清單為靜態資料，不需要放進 store
+export const DEVICES: DeviceType[] = [
+    { id: DeviceIdEnums.desktop , name: '桌面', icon: Monitor, width: '100%' },
+    { id: DeviceIdEnums.tablet , name: '平板', icon: Tablet, width: '768px' },
+    { id: DeviceIdEnums.mobile , name: '手機', icon: Smartphone, width: '375px' },
+];

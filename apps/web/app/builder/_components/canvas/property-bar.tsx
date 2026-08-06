@@ -1,11 +1,8 @@
-import { DeviceIdEnums } from '../header/use-header';
-import { useSelectedElementStore } from '../../store/use-selected-element-store';
+import { useHeaderStore } from '@/store/use-header-store';
+import { useSelectedElementStore } from '@/store/use-selected-element-store';
 
-interface PropertyBarProps {
-    activeDevice: DeviceIdEnums;
-}
-
-export function PropertyBar({ activeDevice }: PropertyBarProps) {
+export function PropertyBar() {
+    const activeDevice = useHeaderStore((state) => state.activeDevice);
     const selectedElement = useSelectedElementStore((state) => state.selectedElement);
     return (
         <div className="bg-white border-t border-gray-200 px-4 py-2 flex items-center justify-between text-sm text-gray-600">

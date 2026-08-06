@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { JSX } from 'react';
-import { ElementSchema } from '@/app/context/schema-context';
+import { ElementSchema } from '@/store/use-schema-store';
 
 const GRID_COLS: Record<number, string> = {
     1: 'grid-cols-1',

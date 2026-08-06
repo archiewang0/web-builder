@@ -1,20 +1,22 @@
-import { useSchemaContext } from '@/app/context/schema-context';
-import { ElementSchema } from '@/app/context/schema-context';
+import { useSchemaStore, ElementSchema } from '@/store/use-schema-store';
 import React, { JSX, useMemo, useState } from 'react';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
-import { useSelectedElementStore } from '@/app/store/use-selected-element-store';
+import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { ButtonElement, ContainerElement, ImgElement, TextElement } from './elements';
 import { computeReorder } from './lib';
 import { useEventLogger } from './use-event-logger';
 import { EventLoggerPanel } from './event-logger-panel';
-import { useThrottle } from '@/app/lib/use-throttle';
+import { useThrottle } from '@/lib/use-throttle';
 
 interface SchemaElementsProps {
     isPreviewMode?: boolean;
 }
 
 export function SchemaElements({ isPreviewMode = false }: SchemaElementsProps) {
-    const { schema, setSchema, elementMap, updateElement } = useSchemaContext();
+    const schema = useSchemaStore((state) => state.schema);
+    const setSchema = useSchemaStore((state) => state.setSchema);
+    const elementMap = useSchemaStore((state) => state.elementMap);
+    const updateElement = useSchemaStore((state) => state.updateElement);
     const selectedElement = useSelectedElementStore((state) => state.selectedElement);
     const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
     const [draggedId, setDraggedId] = useState<string | null>(null);

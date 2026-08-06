@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ElementSchema } from '@/app/context/schema-context';
+import { ElementSchema } from '@/store/use-schema-store';
 
 export interface DragEventEntry {
     id: number;
@@ -56,7 +56,7 @@ it('drag ${entry.from} → ${entry.to}', () => {
             )
             .join('\n\n');
 
-        const output = `import { buildElementMap, computeReorder } from '@/app/components/canvas/lib';
+        const output = `import { buildElementMap, computeReorder } from '@/builder/_components/canvas/lib';
 
 describe('drag reorder', () => {
 ${cases

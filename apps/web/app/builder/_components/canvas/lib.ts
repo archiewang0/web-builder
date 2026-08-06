@@ -1,4 +1,4 @@
-import { ContainerElementSchema, ElementSchema } from "../../context/schema-context";
+import { ContainerElementSchema, ElementSchema } from "@/store/use-schema-store";
 import { ComponentIdEnums } from "../sidebar/use-sidebar";
 
 // Map 索引節點
