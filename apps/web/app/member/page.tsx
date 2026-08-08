@@ -1,11 +1,20 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
+import { usePages } from './use-pages';
 
 export default function MemberPage() {
     const { data: session } = useSession();
     const user = session?.user;
+    const router = useRouter();
+    const { pages, isLoading } = usePages(Boolean(user));
+
+    // 不打 API：只是在前端生一個 id 就換頁，真正的 row 要等使用者在 builder 裡按儲存才會建立。
+    const handleCreatePage = () => {
+        router.push(`/builder/${crypto.randomUUID()}`);
+    };
 
     if (!user) {
         return (
@@ -51,16 +60,35 @@ export default function MemberPage() {
                 <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-base font-semibold text-gray-800">我的網頁</h2>
-                        <Link
-                            href="/builder"
+                        <button
+                            onClick={handleCreatePage}
                             className="text-sm px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
                         >
                             + 建立新網頁
-                        </Link>
+                        </button>
                     </div>
 
-                    {/* TODO: 之後接上使用者實際建立的網頁列表 */}
-                    <p className="text-sm text-gray-400 text-center py-8">尚未建立任何網頁</p>
+                    {isLoading ? (
+                        <p className="text-sm text-gray-400 text-center py-8">載入中...</p>
+                    ) : pages.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-8">尚未建立任何網頁</p>
+                    ) : (
+                        <ul className="divide-y divide-gray-100">
+                            {pages.map((page) => (
+                                <li key={page.id}>
+                                    <Link
+                                        href={`/builder/${page.id}`}
+                                        className="flex items-center justify-between py-3 hover:bg-gray-50 rounded px-2 -mx-2 transition-colors"
+                                    >
+                                        <span className="text-sm text-gray-700">{page.title}</span>
+                                        <span className="text-xs text-gray-400">
+                                            {new Date(page.updatedAt).toLocaleString('zh-TW')}
+                                        </span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </section>
             </div>
         </div>

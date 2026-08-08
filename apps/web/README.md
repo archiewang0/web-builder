@@ -43,3 +43,8 @@ GOOGLE_CLIENT_ID="*******"
 GOOGLE_CLIENT_SECRET="="*******""
 AUTH_SECRET="="*******""
 ```
+
+## Feature Docs
+
+- [Vercel Blob 圖片上傳](./docs/vercel-blob.md) — 上傳/串接方式、架構、環境變數
+- [Google 登入（Auth.js）](./docs/google-auth.md) — OAuth 申請步驟、架構、環境變數

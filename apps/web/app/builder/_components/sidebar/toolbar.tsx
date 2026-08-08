@@ -1,6 +1,14 @@
 import { Eye, EyeOff, Save } from 'lucide-react';
 import { DEVICES } from '@/components/header/use-header';
 import { useHeaderStore } from '@/store/use-header-store';
+import { useSavePage } from './use-save-page';
+
+const SAVE_LABEL: Record<string, string> = {
+    idle: '儲存',
+    saving: '儲存中...',
+    saved: '已儲存',
+    error: '儲存失敗',
+};
 
 // 裝置切換／預覽／儲存：builder 專屬功能，常駐工具列。
 // /builder 整條路由已經由 middleware 做登入檢查，這裡不用再擋一次。
@@ -9,6 +17,7 @@ export function Toolbar() {
     const setActiveDevice = useHeaderStore((state) => state.setActiveDevice);
     const isPreviewMode = useHeaderStore((state) => state.isPreviewMode);
     const setIsPreviewMode = useHeaderStore((state) => state.setIsPreviewMode);
+    const { status, handleSave } = useSavePage();
 
     return (
         <div className="p-3 border-b border-gray-100 space-y-2">
@@ -44,9 +53,13 @@ export function Toolbar() {
                     )}
                     <span>{isPreviewMode ? '編輯' : '預覽'}</span>
                 </button>
-                <button className="flex-1 flex items-center justify-center space-x-1.5 px-2 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition-colors shadow-md">
+                <button
+                    onClick={handleSave}
+                    disabled={status === 'saving'}
+                    className="flex-1 flex items-center justify-center space-x-1.5 px-2 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                     <Save className="w-4 h-4" />
-                    <span>儲存</span>
+                    <span>{SAVE_LABEL[status]}</span>
                 </button>
             </div>
         </div>
