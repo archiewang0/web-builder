@@ -12,7 +12,7 @@ import { FontSetting } from './font-setting';
 import { CollapsibleSection } from './collapsible-section';
 import { ColumnOptions } from './column-options';
 import { BackgroundSetting } from './background-setting';
-import { ImageSizeSetting } from './image-size-setting';
+import { ImageSetting } from './image-setting';
 import { usePropertySetting } from './use-property-setting';
 
 export type { StyleChangeHandler };
@@ -26,6 +26,7 @@ export function PropertySetting() {
         localStyles,
         handleDelete,
         handleContentChange,
+        handleContentValueChange,
         handleStyleChange,
         handleColumnsChange,
         handleFlexAlignChange,
@@ -40,12 +41,14 @@ export function PropertySetting() {
                     <div className="space-y-6">
                         <ElementId id={element.id} />
                         <ComponentId componentId={element.componentId} />
-                        {elementType !== ComponentIdEnums.container && 'content' in element && (
-                            <ContentTextarea
-                                context={localContent}
-                                handleContentChange={handleContentChange}
-                            />
-                        )}
+                        {elementType !== ComponentIdEnums.container &&
+                            elementType !== ComponentIdEnums.image &&
+                            'content' in element && (
+                                <ContentTextarea
+                                    context={localContent}
+                                    handleContentChange={handleContentChange}
+                                />
+                            )}
 
                         {(elementType === ComponentIdEnums.text ||
                             elementType === ComponentIdEnums.button) && (
@@ -72,10 +75,14 @@ export function PropertySetting() {
                         )}
 
                         {elementType === ComponentIdEnums.image && (
-                            <ImageSizeSetting
-                                width={localStyles.width}
-                                onChange={handleStyleChange}
-                            />
+                            <>
+                                <ImageSetting
+                                    content={localContent}
+                                    onChange={handleContentValueChange}
+                                    width={localStyles.width}
+                                    onStyleChange={handleStyleChange}
+                                />
+                            </>
                         )}
 
                         {(elementType === ComponentIdEnums.container ||

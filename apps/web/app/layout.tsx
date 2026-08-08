@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import { Inter, Roboto, Poppins, Playfair_Display, Montserrat } from 'next/font/google';
+import { SessionProvider } from 'next-auth/react';
 import './globals.css';
 import { Header } from '@/components/header';
 
@@ -58,8 +59,10 @@ export default function RootLayout({
                 className={`h-screen flex flex-col ${geistSans.variable} ${geistMono.variable} ${inter.variable} ${roboto.variable} ${poppins.variable} ${playfairDisplay.variable} ${montserrat.variable}`}
                 suppressHydrationWarning
             >
-                <Header />
-                {children}
+                <SessionProvider>
+                    <Header />
+                    {children}
+                </SessionProvider>
             </body>
         </html>
     );

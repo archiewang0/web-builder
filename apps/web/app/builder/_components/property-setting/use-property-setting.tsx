@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     useSchemaStore,
     ElementSchema,
@@ -13,6 +13,10 @@ export function usePropertySetting() {
     const getElementById = useSchemaStore((state) => state.getElementById);
     const updateElement = useSchemaStore((state) => state.updateElement);
     const deleteElement = useSchemaStore((state) => state.deleteElement);
+    // 訂閱 elementMap：canvas 端（拖拉圖片把手、文字 contentEditable）
+    // 是直接呼叫 store 的 updateElement，不會經過這個 hook。若不訂閱，
+    // 這個元件不會因為那些外部寫入而重新 render，面板就會顯示舊值。
+    useSchemaStore((state) => state.elementMap);
     const selectedElement = useSelectedElementStore((state) => state.selectedElement);
 
     const element = selectedElement ? getElementById(selectedElement) : null;
@@ -20,13 +24,32 @@ export function usePropertySetting() {
     const [localContent, setLocalContent] = useState<string>('');
     const [localStyles, setLocalStyles] = useState<NonNullable<ElementSchema['styles']>>({});
 
+    // 記錄「這個面板自己最後寫入 store 的值」，用來分辨 element 參照變動是
+    // 自己 debounce 回寫的 echo，還是外部變動（例如畫布拖拉調整圖片寬度）。
+    // 只有外部變動才需要同步覆蓋本地狀態，否則會在打字中途被舊值蓋掉。
+    const lastWrittenContentRef = useRef<string | undefined>(undefined);
+    const lastWrittenStylesRef = useRef<NonNullable<ElementSchema['styles']> | undefined>(
+        undefined
+    );
+
     useEffect(() => {
-        if (element && 'content' in element) {
-            setLocalContent(element.content || '');
-        } else {
+        lastWrittenContentRef.current = undefined;
+        lastWrittenStylesRef.current = undefined;
+    }, [selectedElement]);
+
+    useEffect(() => {
+        if (!element) {
             setLocalContent('');
+            setLocalStyles({});
+            return;
         }
-        setLocalStyles(element?.styles || {});
+        const content = 'content' in element ? element.content || '' : '';
+        if (content !== lastWrittenContentRef.current) {
+            setLocalContent(content);
+        }
+        if (element.styles !== lastWrittenStylesRef.current) {
+            setLocalStyles(element.styles || {});
+        }
     }, [selectedElement, element]);
 
     const handleDelete = () => {
@@ -36,19 +59,24 @@ export function usePropertySetting() {
     };
 
     const updateContent = useDebouncedCallback((id: string, content: string) => {
+        lastWrittenContentRef.current = content;
         updateElement(id, { content } as Partial<ElementSchema>);
     }, 300);
 
-    const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const newValue = e.target.value;
+    const handleContentValueChange = (newValue: string) => {
         setLocalContent(newValue);
         if (selectedElement) {
             updateContent(selectedElement, newValue);
         }
     };
 
+    const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        handleContentValueChange(e.target.value);
+    };
+
     const updateStyles = useDebouncedCallback(
         (id: string, styles: NonNullable<ElementSchema['styles']>) => {
+            lastWrittenStylesRef.current = styles;
             updateElement(id, { styles } as Partial<ElementSchema>);
         },
         300
@@ -67,6 +95,7 @@ export function usePropertySetting() {
         if (!selectedElement) return;
         const newStyles = { ...localStyles, justifyContent: undefined };
         setLocalStyles(newStyles);
+        lastWrittenStylesRef.current = newStyles;
         updateElement(selectedElement, {
             columns,
             styles: newStyles,
@@ -77,6 +106,7 @@ export function usePropertySetting() {
         if (!selectedElement) return;
         const newStyles = { ...localStyles, justifyContent };
         setLocalStyles(newStyles);
+        lastWrittenStylesRef.current = newStyles;
         updateElement(selectedElement, {
             columns: undefined,
             styles: newStyles,
@@ -95,6 +125,7 @@ export function usePropertySetting() {
         localStyles,
         handleDelete,
         handleContentChange,
+        handleContentValueChange,
         handleStyleChange,
         handleColumnsChange,
         handleFlexAlignChange,

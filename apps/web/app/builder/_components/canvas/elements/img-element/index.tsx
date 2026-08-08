@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { Image as ImageIcon } from 'lucide-react';
 import { useImageResize } from './use-image-resize';
@@ -33,6 +34,16 @@ export function ImgElement({
     const { style, ...restProperty } = elementProperty;
     const hasImage = Boolean(content);
 
+    // 換圖時先清掉舊尺寸，避免顯示上一張圖片殘留的自然尺寸
+    const [naturalWidth, setNaturalWidth] = useState<number | null>(null);
+    useEffect(() => {
+        setNaturalWidth(null);
+    }, [content]);
+
+    const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        setNaturalWidth(e.currentTarget.naturalWidth);
+    };
+
     return (
         <div
             ref={wrapperRef}
@@ -40,7 +51,11 @@ export function ImgElement({
             onDragStart={handleDragStart}
             style={
                 hasImage
-                    ? { ...style, width: `${displayPercent}%`, maxWidth: PLACEHOLDER_WIDTH }
+                    ? {
+                          ...style,
+                          width: `${displayPercent}%`,
+                          maxWidth: naturalWidth ?? PLACEHOLDER_WIDTH,
+                      }
                     : {
                           ...style,
                           width: '100%',
@@ -59,12 +74,11 @@ export function ImgElement({
                     src={content}
                     alt="元件圖片"
                     draggable={false}
+                    onLoad={handleImageLoad}
                     style={{
                         display: 'block',
                         width: '100%',
                         height: 'auto',
-                        maxHeight: PLACEHOLDER_HEIGHT,
-                        objectFit: 'contain',
                         borderRadius: style?.borderRadius,
                     }}
                     className="pointer-events-auto rounded"

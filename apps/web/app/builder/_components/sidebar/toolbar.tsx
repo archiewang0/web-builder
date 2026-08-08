@@ -1,17 +1,14 @@
 import { Eye, EyeOff, Save } from 'lucide-react';
 import { DEVICES } from '@/components/header/use-header';
-import { useAuthStore } from '@/store/use-auth-store';
 import { useHeaderStore } from '@/store/use-header-store';
 
-// 裝置切換／預覽／儲存：builder 專屬功能，常駐工具列，登入後才顯示
+// 裝置切換／預覽／儲存：builder 專屬功能，常駐工具列。
+// /builder 整條路由已經由 middleware 做登入檢查，這裡不用再擋一次。
 export function Toolbar() {
-    const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
     const activeDevice = useHeaderStore((state) => state.activeDevice);
     const setActiveDevice = useHeaderStore((state) => state.setActiveDevice);
     const isPreviewMode = useHeaderStore((state) => state.isPreviewMode);
     const setIsPreviewMode = useHeaderStore((state) => state.setIsPreviewMode);
-
-    if (!isLoggedIn) return null;
 
     return (
         <div className="p-3 border-b border-gray-100 space-y-2">

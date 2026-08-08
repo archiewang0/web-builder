@@ -1,20 +1,19 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useAuthStore } from '@/store/use-auth-store';
+import { signIn, useSession } from 'next-auth/react';
 
 export default function MemberPage() {
-    const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
-    const login = useAuthStore((state) => state.login);
-    const user = useAuthStore((state) => state.user);
+    const { data: session } = useSession();
+    const user = session?.user;
 
-    if (!isLoggedIn || !user) {
+    if (!user) {
         return (
             <div className="flex-1 flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <p className="mb-6 text-gray-500">請先登入才能查看會員資料</p>
                     <button
-                        onClick={login}
+                        onClick={() => signIn('google')}
                         className="inline-flex items-center gap-3 px-6 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow"
                     >
                         <GoogleIcon className="w-5 h-5" />
@@ -33,7 +32,7 @@ export default function MemberPage() {
                 {/* Google 帳號資料 */}
                 <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <div className="flex items-center gap-4">
-                        <Avatar name={user.name} picture={user.picture} />
+                        <Avatar name={user.name ?? ''} picture={user.image ?? undefined} />
                         <div>
                             <h1 className="text-lg font-semibold text-gray-800">{user.name}</h1>
                             <p className="text-sm text-gray-500">{user.email}</p>
@@ -41,10 +40,10 @@ export default function MemberPage() {
                     </div>
 
                     <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
-                        <Field label="名" value={user.given_name} />
-                        <Field label="姓" value={user.family_name} />
+                        <Field label="名" value={user.given_name ?? '-'} />
+                        <Field label="姓" value={user.family_name ?? '-'} />
                         <Field label="Email 已驗證" value={user.email_verified ? '是' : '否'} />
-                        <Field label="語言地區" value={user.locale} />
+                        <Field label="語言地區" value={user.locale ?? '-'} />
                     </dl>
                 </section>
 
