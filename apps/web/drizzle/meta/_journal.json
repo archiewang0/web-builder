@@ -8,6 +8,13 @@
       "when": 1786208144511,
       "tag": "0000_quiet_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786374200420,
+      "tag": "0001_abnormal_lily_hollister",
+      "breakpoints": true
     }
   ]
 }

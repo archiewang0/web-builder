@@ -5,13 +5,17 @@ import { useParams } from 'next/navigation';
 import { upload } from '@vercel/blob/client';
 import { useSchemaStore } from '@/store/use-schema-store';
 import { usePendingUploadStore } from '@/store/use-pending-upload-store';
+import { usePageTitleStore } from '@/store/use-page-title-store';
+import { usePageVisibilityStore } from '@/store/use-page-visibility-store';
 import { collectBlobUrls, replaceBlobUrls } from '@/lib/resolve-pending-images';
+import { validatePageTitle } from '@/lib/validate-page-title';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export function useSavePage() {
     const params = useParams<{ id: string }>();
     const [status, setStatus] = useState<SaveStatus>('idle');
+    const [titleError, setTitleError] = useState<string | null>(null);
 
     // 存檔成功/失敗的提示只需要短暫顯示，之後自動回到 idle
     useEffect(() => {
@@ -21,10 +25,19 @@ export function useSavePage() {
     }, [status]);
 
     const handleSave = async () => {
+        const title = usePageTitleStore.getState().title.trim();
+        const invalidTitleMessage = validatePageTitle(title);
+        if (invalidTitleMessage) {
+            setTitleError(invalidTitleMessage);
+            return;
+        }
+        setTitleError(null);
+
         setStatus('saving');
         try {
             const schema = useSchemaStore.getState().schema;
             const pending = usePendingUploadStore.getState().pending;
+            const isPublic = usePageVisibilityStore.getState().isPublic;
 
             // 把 schema 裡還沒真的上傳的 blob: 預覽網址，全部換成真正的 Blob 網址。
             // 任何一張上傳失敗就整個中斷（全有全無）——不會存進一半真網址一半死掉的 blob 網址。
@@ -46,7 +59,7 @@ export function useSavePage() {
             const res = await fetch(`/api/pages/${params.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ schema: resolvedSchema }),
+                body: JSON.stringify({ schema: resolvedSchema, title, isPublic }),
             });
             if (!res.ok) throw new Error('Save failed');
 
@@ -64,5 +77,5 @@ export function useSavePage() {
         }
     };
 
-    return { status, handleSave };
+    return { status, handleSave, titleError };
 }

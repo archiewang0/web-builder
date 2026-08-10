@@ -1,18 +1,14 @@
 import { Image, Layout, Square, Type } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ComponentIdEnums } from "./component-id-enums";
+
+export { ComponentIdEnums };
 
 export interface Component {
   id: ComponentIdEnums;
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   category: string;
-}
-
-export enum ComponentIdEnums {
-    text = 'text',
-    image = 'image',
-    button = 'button',
-    container = 'container'
 }
 
 export function useSidebar () {

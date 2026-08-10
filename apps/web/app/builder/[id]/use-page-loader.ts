@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useSchemaStore } from '@/store/use-schema-store';
 import { useSelectedElementStore } from '@/store/use-selected-element-store';
+import { usePageTitleStore } from '@/store/use-page-title-store';
+import { usePageVisibilityStore } from '@/store/use-page-visibility-store';
 
 type LoadStatus = 'loading' | 'error' | 'ready';
 
@@ -13,6 +15,8 @@ export function usePageLoader() {
     const params = useParams<{ id: string }>();
     const setSchema = useSchemaStore((state) => state.setSchema);
     const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
+    const setTitle = usePageTitleStore((state) => state.setTitle);
+    const setIsPublic = usePageVisibilityStore((state) => state.setIsPublic);
     const [status, setStatus] = useState<LoadStatus>('loading');
 
     useEffect(() => {
@@ -28,6 +32,8 @@ export function usePageLoader() {
                 // 不是錯誤——用空白 schema 蓋掉 store 裡可能殘留的上一份頁面內容。
                 if (res.status === 404) {
                     setSchema({ elements: [] });
+                    setTitle('未命名頁面');
+                    setIsPublic(false);
                     setStatus('ready');
                     return;
                 }
@@ -36,6 +42,8 @@ export function usePageLoader() {
                 const data = await res.json();
                 if (ignore) return;
                 setSchema(data.page.schema);
+                setTitle(data.page.title);
+                setIsPublic(data.page.isPublic);
                 setStatus('ready');
             })
             .catch(() => {
@@ -45,7 +53,7 @@ export function usePageLoader() {
         return () => {
             ignore = true;
         };
-    }, [params.id, setSchema, setSelectedElement]);
+    }, [params.id, setSchema, setSelectedElement, setTitle, setIsPublic]);
 
     return { status };
 }

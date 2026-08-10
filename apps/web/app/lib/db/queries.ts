@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { users, pages } from './schema';
 import type { CanvasSchema } from '@/store/use-schema-store';
@@ -53,15 +53,45 @@ export async function getPageById(id: string) {
     return page ?? null;
 }
 
+// 給公開展示頁（/site/[id]）用：不檢查登入身分，只檢查是否被作者設為公開。
+export async function getPublicPageById(id: string) {
+    const [page] = await db
+        .select()
+        .from(pages)
+        .where(and(eq(pages.id, id), eq(pages.isPublic, true)));
+    return page ?? null;
+}
+
+// 給 /gallery 展示牆用：列出所有被設為公開的頁面，帶作者名稱，最新更新排最前面。
+export async function listPublicPages() {
+    return db
+        .select({
+            id: pages.id,
+            title: pages.title,
+            updatedAt: pages.updatedAt,
+            authorName: users.name,
+        })
+        .from(pages)
+        .innerJoin(users, eq(pages.userId, users.id))
+        .where(eq(pages.isPublic, true))
+        .orderBy(desc(pages.updatedAt));
+}
+
 // 第一次儲存時這筆 id 在 DB 裡還不存在 → 視為新增；已經存在且是自己的 → 更新；
 // 存在但是別人的 → WHERE 條件不成立，不會更新也不會新增，回傳 null 讓呼叫端擋掉。
-export async function upsertPageSchema(id: string, userId: string, schema: CanvasSchema) {
+export async function upsertPageSchema(
+    id: string,
+    userId: string,
+    schema: CanvasSchema,
+    title: string,
+    isPublic: boolean
+) {
     const [page] = await db
         .insert(pages)
-        .values({ id, userId, schema })
+        .values({ id, userId, schema, title, isPublic })
         .onConflictDoUpdate({
             target: pages.id,
-            set: { schema, updatedAt: new Date() },
+            set: { schema, title, isPublic, updatedAt: new Date() },
             where: eq(pages.userId, userId),
         })
         .returning();

@@ -24,6 +24,7 @@ export const pages = pgTable('pages', {
         .notNull()
         .references(() => users.id, { onDelete: 'cascade' }),
     title: text('title').notNull().default('未命名頁面'),
+    isPublic: boolean('is_public').notNull().default(false),
     schema: jsonb('schema').notNull().$type<CanvasSchema>(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

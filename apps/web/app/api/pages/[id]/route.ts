@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { deletePageForUser, getPageById, upsertPageSchema } from '@/lib/db/queries';
+import { validatePageTitle } from '@/lib/validate-page-title';
 
 interface RouteParams {
     params: Promise<{ id: string }>;
@@ -49,8 +50,24 @@ export async function PUT(request: Request, { params }: RouteParams) {
     if (!body?.schema || !Array.isArray(body.schema.elements)) {
         return NextResponse.json({ error: 'Missing or invalid schema' }, { status: 400 });
     }
+    if (typeof body.title !== 'string') {
+        return NextResponse.json({ error: 'Missing title' }, { status: 400 });
+    }
+    const titleError = validatePageTitle(body.title);
+    if (titleError) {
+        return NextResponse.json({ error: titleError }, { status: 400 });
+    }
+    if (typeof body.isPublic !== 'boolean') {
+        return NextResponse.json({ error: 'Missing isPublic' }, { status: 400 });
+    }
 
-    const page = await upsertPageSchema(id, session.user.id, body.schema);
+    const page = await upsertPageSchema(
+        id,
+        session.user.id,
+        body.schema,
+        body.title.trim(),
+        body.isPublic
+    );
     if (!page) {
         // 只有「id 已存在但屬於別人」才會落到這裡；自己的（不管新舊）都會成功。
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

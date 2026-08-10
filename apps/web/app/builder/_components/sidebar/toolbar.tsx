@@ -1,6 +1,8 @@
-import { Eye, EyeOff, Save } from 'lucide-react';
+import { Eye, EyeOff, Globe, Lock, Save } from 'lucide-react';
 import { DEVICES } from '@/components/header/use-header';
 import { useHeaderStore } from '@/store/use-header-store';
+import { usePageTitleStore } from '@/store/use-page-title-store';
+import { usePageVisibilityStore } from '@/store/use-page-visibility-store';
 import { useSavePage } from './use-save-page';
 
 const SAVE_LABEL: Record<string, string> = {
@@ -17,10 +19,47 @@ export function Toolbar() {
     const setActiveDevice = useHeaderStore((state) => state.setActiveDevice);
     const isPreviewMode = useHeaderStore((state) => state.isPreviewMode);
     const setIsPreviewMode = useHeaderStore((state) => state.setIsPreviewMode);
-    const { status, handleSave } = useSavePage();
+    const title = usePageTitleStore((state) => state.title);
+    const setTitle = usePageTitleStore((state) => state.setTitle);
+    const isPublic = usePageVisibilityStore((state) => state.isPublic);
+    const setIsPublic = usePageVisibilityStore((state) => state.setIsPublic);
+    const { status, handleSave, titleError } = useSavePage();
 
     return (
         <div className="p-3 border-b border-gray-100 space-y-2">
+            <div>
+                <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="網頁名稱（必填）"
+                    className={`w-full px-2 py-1.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400 ${
+                        titleError ? 'border-red-400' : 'border-gray-200'
+                    }`}
+                />
+                {titleError && <p className="mt-1 text-xs text-red-500">{titleError}</p>}
+            </div>
+            <div className="flex items-center justify-between gap-2 px-1">
+                <span className="flex items-center gap-1 text-xs text-gray-500">
+                    {isPublic ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                    {isPublic ? '公開頁面' : '私密頁面'}
+                </span>
+                <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isPublic}
+                    onClick={() => setIsPublic(!isPublic)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        isPublic ? 'bg-blue-500' : 'bg-gray-300'
+                    }`}
+                >
+                    <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            isPublic ? 'translate-x-4' : 'translate-x-1'
+                        }`}
+                    />
+                </button>
+            </div>
             <div className="justify-center flex items-center gap-1">
                 {DEVICES.map((device) => (
                     <button

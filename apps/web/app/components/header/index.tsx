@@ -16,6 +16,9 @@ export function Header() {
                 <Link href="/" className="text-xl font-bold text-gray-800">
                     Website Builder
                 </Link>
+                <Link href="/gallery" className="text-sm text-gray-600 hover:text-gray-900">
+                    展示牆
+                </Link>
             </div>
 
             <div className="flex items-center ">
