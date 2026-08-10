@@ -1,20 +1,15 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
 import { usePages } from './use-pages';
+import { useCreatePage } from '@/lib/use-create-page';
 
 export default function MemberPage() {
     const { data: session } = useSession();
     const user = session?.user;
-    const router = useRouter();
     const { pages, isLoading } = usePages(Boolean(user));
-
-    // 不打 API：只是在前端生一個 id 就換頁，真正的 row 要等使用者在 builder 裡按儲存才會建立。
-    const handleCreatePage = () => {
-        router.push(`/builder/${crypto.randomUUID()}`);
-    };
+    const handleCreatePage = useCreatePage();
 
     if (!user) {
         return (

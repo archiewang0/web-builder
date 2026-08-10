@@ -5,12 +5,10 @@ import { ContentTextarea } from './content-textarea';
 import { ElementId } from './element-id';
 import { ComponentId } from './component-id';
 import { MarginInputs } from './margin-inputs';
-import { FlexAlignSetting } from './flex-align-setting';
 import { BorderInputs } from './border-inputs';
 import { StyleChangeHandler } from './types';
 import { FontSetting } from './font-setting';
-import { CollapsibleSection } from './collapsible-section';
-import { ColumnOptions } from './column-options';
+import { LayoutSetting } from './layout-setting';
 import { BackgroundSetting } from './background-setting';
 import { ImageSetting } from './image-setting';
 import { usePropertySetting } from './use-property-setting';
@@ -104,20 +102,12 @@ export function PropertySetting() {
                             onChange={handleStyleChange}
                         />
                         {elementType === ComponentIdEnums.container && (
-                            <>
-                                <CollapsibleSection title="欄位設定">
-                                    <div className="p-2 border border-gray-200 rounded-lg">
-                                        <ColumnOptions
-                                            value={containerColumns}
-                                            onChange={handleColumnsChange}
-                                        />
-                                    </div>
-                                </CollapsibleSection>
-                                <FlexAlignSetting
-                                    value={localStyles.justifyContent}
-                                    onChange={handleFlexAlignChange}
-                                />
-                            </>
+                            <LayoutSetting
+                                columns={containerColumns}
+                                onColumnsChange={handleColumnsChange}
+                                justifyContent={localStyles.justifyContent}
+                                onJustifyContentChange={handleFlexAlignChange}
+                            />
                         )}
                         <BorderInputs
                             borderWidth={localStyles.borderWidth}

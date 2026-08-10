@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { CreatePageButton } from './create-page-button';
 
 export default function Home() {
     return (
@@ -12,13 +11,7 @@ export default function Home() {
                     不用寫一行程式碼。把文字、圖片、按鈕、容器拖進畫布就完成排版，
                     即時切換桌面、平板、手機三種裝置預覽，所見即所得。
                 </p>
-                <Link
-                    href="/builder"
-                    className="mt-8 inline-flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-3 font-medium text-white shadow-md transition-colors hover:bg-blue-600"
-                >
-                    開始建立網站
-                    <ArrowRight className="w-4 h-4" />
-                </Link>
+                <CreatePageButton />
             </div>
         </div>
     );

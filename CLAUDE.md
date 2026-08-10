@@ -158,7 +158,8 @@ web-builder/
 #### 路由結構
 
 - `/` - 主頁，顯示 Web Builder 編輯器
-- `/builder` - 獨立編輯器頁面
+- `/builder/[id]` - 獨立編輯器頁面，`id` 對應一份使用者建立的網頁（Supabase `pages` table），由 middleware 檢查登入狀態
+- `/member` - 會員中心，顯示 Google 帳號資料與使用者建立的網頁列表，未登入時顯示登入按鈕
 
 #### 樣式架構
 

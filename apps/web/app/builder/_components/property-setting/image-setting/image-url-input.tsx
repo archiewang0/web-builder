@@ -16,8 +16,7 @@ export function ImageUrlInput({
     label = '圖片',
     placeholder = 'https://... 圖片網址',
 }: ImageUrlInputProps) {
-    const { fileInputRef, openFileDialog, handleFileChange, isUploading, error } =
-        useImageUpload(onChange);
+    const { fileInputRef, openFileDialog, handleFileChange, error } = useImageUpload(onChange);
     const meta = useImageMeta(value);
 
     return (
@@ -37,10 +36,9 @@ export function ImageUrlInput({
                 <button
                     type="button"
                     onClick={openFileDialog}
-                    disabled={isUploading}
-                    className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
                 >
-                    {isUploading ? '上傳中...' : '上傳圖片'}
+                    上傳圖片
                 </button>
                 {value && (
                     <button
