@@ -51,6 +51,30 @@ Private blob 的網址無法被瀏覽器直接讀取，一定要經過我們自�
 | `app/builder/_components/property-setting/image-setting/image-url-input.tsx` | UI：網址輸入框 + 上傳按鈕（`上傳中...`/錯誤訊息），背景圖片跟圖片元件共用這個元件 |
 | `app/builder/_components/property-setting/image-setting/use-image-meta.ts` | 讀圖算出寬高跟格式，顯示在輸入框下面 |
 
+## 頁面縮圖（存檔時自動截圖）
+
+存檔（`use-save-page.ts`）時會額外對 `#canvas` DOM 截圖，走跟一般圖片上傳同一套 client upload + private access 流程，存進 `pages.thumbnail_path`：
+
+| 檔案 | 做什麼 |
+|---|---|
+| `app/lib/capture-screenshot.ts` | 用 `html-to-image` 的 `toPng()` 截原尺寸畫面，再用 canvas 縮放裁切成固定 960×540、JPEG 品質遞減直到 ≤500KB |
+| `app/builder/_components/sidebar/use-save-page.ts` | 截圖 → `upload()` 到 `screenshots/<pageId>.jpg` → 把回傳的 `pathname` 存進 PUT body 的 `thumbnailPath` |
+| `app/lib/db/schema.ts` / `queries.ts` | `pages.thumbnail_path`（nullable）；`upsertPageSchema` 沒收到 `thumbnailPath` 就不動這欄，避免截圖失敗把舊縮圖清空 |
+| `app/gallery/page.tsx` | 用 `/api/image?pathname=<thumbnail_path>` 顯示卡片縮圖，沒有縮圖就顯示灰底 icon |
+
+截圖失敗（例如瀏覽器不支援某些 CSS）不會擋住存檔本身——`handleSave` 裡包了 try/catch，失敗就不帶 `thumbnailPath`。
+
+## 孤兒檔案清理
+
+存檔（`PUT /api/pages/[id]`）跟刪除頁面（`DELETE /api/pages/[id]`）都會清掉不再被引用的 blob：
+
+| 檔案 | 做什麼 |
+|---|---|
+| `app/lib/collect-blob-pathnames.ts` | 走訪 schema（圖片內容 + 背景圖片）跟縮圖，找出所有引用到的 Blob pathname |
+| `app/api/pages/[id]/route.ts` | PUT：存檔前先讀出舊的 page，拿舊/新兩份 schema 各自的 pathname 比對，舊的裡有但新的裡沒有的就是這次存檔換掉的圖，呼叫 `del()` 刪掉；DELETE：頁面刪除後，把它引用過的所有 pathname 一次刪掉 |
+
+清理是「順手做」，不是存檔/刪除成功的必要條件——`del()` 失敗（例如檔案已經不存在）會被吃掉，不會讓存檔或刪除跟著報錯。
+
 ## 如何在新的地方接上傳圖片功能
 
 如果之後要在別的地方（例如某個新元件）也做「上傳圖片 / 貼網址」：
@@ -71,7 +95,6 @@ import { ImageUrlInput } from '@/builder/_components/property-setting/image-sett
 ## ⚠️ 目前沒有做的事（之後要注意）
 
 - **權限驗證**：`/api/image/route.ts` 目前只要知道 `pathname` 就能讀到內容，沒有檢查呼叫者是不是圖片的擁有者。等有真正的登入 session（見 `google-auth.md`）之後，應該在這裡加一段 `auth()` 檢查。
-- **刪除孤兒檔案**：使用者換圖或刪除元素時，舊的 blob 不會被清掉，長期會佔用 storage 空間。之後要在「存檔」那個時間點做差異比對，把不再被引用的 blob 呼叫 `del()` 清掉。
 - **重複上傳去重**：同一張圖片被上傳多次會產生多份 blob。之後可以用檔案內容的 hash 當作 `pathname`，上傳前先檢查是否已存在。
 
 ## 常見問題
