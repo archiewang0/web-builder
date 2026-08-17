@@ -11,7 +11,14 @@ import { collectBlobUrls, replaceBlobUrls } from '@/lib/resolve-pending-images';
 import { validatePageTitle } from '@/lib/validate-page-title';
 import { captureScreenshot } from '@/lib/capture-screenshot';
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+export const SAVE_LABEL: Record<SaveStatus, string> = {
+    idle: '儲存',
+    saving: '儲存中...',
+    saved: '已儲存',
+    error: '儲存失敗',
+};
 
 export function useSavePage() {
     const params = useParams<{ id: string }>();
@@ -25,12 +32,13 @@ export function useSavePage() {
         return () => clearTimeout(timer);
     }, [status]);
 
-    const handleSave = async () => {
+    // 回傳是否真的存檔成功，讓呼叫端能判斷要不要接著做後續動作，而不是存檔失敗還誤以為成功。
+    const handleSave = async (): Promise<boolean> => {
         const title = usePageTitleStore.getState().title.trim();
         const invalidTitleMessage = validatePageTitle(title);
         if (invalidTitleMessage) {
             setTitleError(invalidTitleMessage);
-            return;
+            return false;
         }
         setTitleError(null);
 
@@ -91,8 +99,18 @@ export function useSavePage() {
             });
 
             setStatus('saved');
+
+            // 公開頁面存檔成功後，另開一個分頁直接看發布結果（/site/[id]，跟公開頁共用同一份唯讀渲染）。
+            // 私密頁面訪問 /site/[id] 只會看到「尚未公開」，開了也沒意義，所以不開。
+            if (isPublic) {
+                const newTab = window.open('about:blank', '_blank');
+                if (newTab) newTab.location.href = `/site/${params.id}`;
+            }
+
+            return true;
         } catch {
             setStatus('error');
+            return false;
         }
     };
 

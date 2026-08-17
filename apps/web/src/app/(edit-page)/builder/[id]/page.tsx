@@ -5,6 +5,7 @@ import { useHeaderStore } from '@/store/use-header-store';
 import { Sidebar } from '../_components/sidebar';
 import { Canvas } from '../_components/canvas';
 import { PropertySetting } from '../_components/property-setting';
+import { PreviewFloatingControls } from '../_components/preview-floating-controls';
 import { usePageLoader } from './use-page-loader';
 
 // 登入檢查已經交給 middleware.ts 做 server-side guard，這裡不用再判斷。
@@ -48,6 +49,9 @@ export default function WebBuilderPage() {
 
             {/* 右側屬性面板：預覽模式下隱藏 */}
             {!isPreviewMode && <PropertySetting />}
+
+            {/* 預覽模式：sidebar 已整個不 render，改用浮動小工具負責返回編輯／儲存 */}
+            {isPreviewMode && <PreviewFloatingControls />}
         </div>
     );
 }

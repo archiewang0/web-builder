@@ -5,7 +5,7 @@ import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { ButtonElement, ContainerElement, ImgElement, TextElement } from './elements';
 import { computeReorder } from './lib';
 import { useEventLogger } from './use-event-logger';
-import { EventLoggerPanel } from './event-logger-panel';
+// import { EventLoggerPanel } from './event-logger-panel';
 import { useThrottle } from '@/lib/use-throttle';
 
 interface SchemaElementsProps {
@@ -35,7 +35,8 @@ export function SchemaElements({ isPreviewMode = false }: SchemaElementsProps) {
         const elementProperty = {
             ['data-component-id']: data.componentId,
             ['data-element-id']: data.id,
-            ['selected-style']: data.id === selectedElement ? 'relative z-10 ring-2 ring-blue-500' : '',
+            ['selected-style']:
+                data.id === selectedElement ? 'relative z-10 ring-2 ring-blue-500' : '',
             draggable: true,
             style: {
                 ...(data.styles as React.CSSProperties),
@@ -171,12 +172,6 @@ export function SchemaElements({ isPreviewMode = false }: SchemaElementsProps) {
             >
                 {shadowElements.map((element) => SchemaElementRender(element))}
             </div>
-            <EventLoggerPanel
-                eventLog={eventLog}
-                onCopyJSON={copyAsJSON}
-                onCopyTest={copyAsTest}
-                onClear={clearLog}
-            />
         </>
     );
 }

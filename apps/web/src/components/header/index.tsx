@@ -1,7 +1,9 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { LogIn, LogOut } from 'lucide-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
+import { useHeaderStore } from '@/store/use-header-store';
 
 // 頂部工具欄：被提升到 layout 中渲染，所有頁面共用。
 // 裝置切換／預覽／儲存是 builder 專屬功能，改放進 Sidebar 裡面。
@@ -9,6 +11,12 @@ export function Header() {
     const { data: session } = useSession();
     const isLoggedIn = Boolean(session);
     const user = session?.user;
+    const isPreviewMode = useHeaderStore((state) => state.isPreviewMode);
+    const pathname = usePathname();
+
+    // isPreviewMode 是跨頁面共用的全域 state，只有在 builder 頁面本身才需要
+    // 因為預覽模式隱藏 header；離開 /builder 後即使值還沒重置，也不該連帶消失。
+    if (isPreviewMode && pathname.startsWith('/builder')) return null;
 
     return (
         <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between shadow-sm">

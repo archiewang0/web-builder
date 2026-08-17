@@ -51,7 +51,12 @@ export function Canvas({ isPreviewMode = false }: CanvasProps) {
             }}
         >
             <div className="flex w-full h-full flex-col">
-                <div className="flex-1 overflow-y-auto p-6 flex items-start justify-center">
+                <div
+                    className={classNames(
+                        'flex-1 overflow-y-auto flex items-start justify-center',
+                        !isPreviewMode && 'p-6'
+                    )}
+                >
                     <div
                         className="bg-white shadow-xl rounded-lg transition-all duration-300 overflow-hidden"
                         style={{
@@ -88,7 +93,7 @@ export function Canvas({ isPreviewMode = false }: CanvasProps) {
                         </div>
                     </div>
                 </div>
-                <PropertyBar />
+                {!isPreviewMode && <PropertyBar />}
             </div>
 
             {dragHint && (

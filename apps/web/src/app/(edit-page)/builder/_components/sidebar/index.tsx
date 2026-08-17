@@ -17,6 +17,10 @@ export function Sidebar({ components, setDragStartTaget, setDragEndTaget }: Side
     const isPreviewMode = useHeaderStore((state) => state.isPreviewMode);
     const { asideRef, width, handleResizeStart, isCollapsed } = useSidebarResize();
 
+    // 預覽模式改用 PreviewFloatingControls 浮動小工具處理返回編輯／儲存，
+    // sidebar（含 device 切換等 Toolbar 功能）整個不 render，畫面才不會被壓縮。
+    if (isPreviewMode) return null;
+
     return (
         <aside ref={asideRef} style={{ width }} className="relative shrink-0 overflow-hidden">
             {/* 內層固定 w-64（256px），對齊 sidebar 最右側；外層寬度縮小時只裁切內層，不會擠壓裡面的文字 */}
