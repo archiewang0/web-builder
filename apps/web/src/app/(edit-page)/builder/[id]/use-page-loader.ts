@@ -31,7 +31,7 @@ export function usePageLoader() {
                 // 404：這個 id 是前端自己生成的，還沒存過檔，屬於正常的「全新頁面」，
                 // 不是錯誤——用空白 schema 蓋掉 store 裡可能殘留的上一份頁面內容。
                 if (res.status === 404) {
-                    setSchema({ elements: [] });
+                    setSchema({ body: {}, elements: [] });
                     setTitle('未命名頁面');
                     setIsPublic(false);
                     setStatus('ready');
@@ -41,7 +41,8 @@ export function usePageLoader() {
 
                 const data = await res.json();
                 if (ignore) return;
-                setSchema(data.page.schema);
+                // 這個功能上線前存的頁面沒有 body 欄位，讀取時補上預設值，避免整個編輯器要到處判斷 undefined。
+                setSchema({ body: data.page.schema.body ?? {}, elements: data.page.schema.elements });
                 setTitle(data.page.title);
                 setIsPublic(data.page.isPublic);
                 setStatus('ready');

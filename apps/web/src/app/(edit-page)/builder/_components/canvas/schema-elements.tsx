@@ -155,7 +155,7 @@ export function SchemaElements({ isPreviewMode = false }: SchemaElementsProps) {
         if (draggedId && dropTargetId) {
             logEvent(draggedId, dropTargetId, schema.elements, shadowElements);
         }
-        setSchema({ elements: shadowElements });
+        setSchema((prev) => ({ ...prev, elements: shadowElements }));
         setDraggedId(null);
         setDropTargetId(null);
         console.log('🔵 [element drag] drop committed');

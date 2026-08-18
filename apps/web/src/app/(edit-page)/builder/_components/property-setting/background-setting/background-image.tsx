@@ -4,8 +4,6 @@ import { StyleChangeHandler } from '../types';
 import { ImageUrlInput } from '../image-setting/image-url-input';
 import { extractBackgroundImageUrl } from '@/lib/extract-background-image-url';
 
-export { extractBackgroundImageUrl };
-
 export interface BackgroundImageProps {
     backgroundImage?: string;
     backgroundSize?: string;

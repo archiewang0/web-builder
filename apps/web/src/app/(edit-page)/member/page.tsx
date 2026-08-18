@@ -1,16 +1,28 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { ImageOff } from 'lucide-react';
+import { ImageOff, Trash2 } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import { usePages } from './use-pages';
 import { useCreatePage } from '@/lib/use-create-page';
+import { useDialogStore } from '@/store/use-dialog-store';
+import { GoogleIcon } from '@/icons/google-icon';
 
 export default function MemberPage() {
     const { data: session } = useSession();
     const user = session?.user;
-    const { pages, isLoading } = usePages(Boolean(user));
+    const { pages, isLoading, deletePage } = usePages(Boolean(user));
     const handleCreatePage = useCreatePage();
+
+    const confirmDeletePage = (id: string, title: string) => {
+        useDialogStore.getState().open({
+            title: '刪除網頁',
+            description: `確定要刪除「${title}」嗎？此操作無法復原。`,
+            confirmText: '確定刪除',
+            danger: true,
+            onConfirm: () => deletePage(id),
+        });
+    };
 
     if (!user) {
         return (
@@ -77,13 +89,13 @@ export default function MemberPage() {
                                         className="flex items-center gap-3 justify-between py-3 hover:bg-gray-50 rounded px-2 -mx-2 transition-colors"
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
-                                            <div className="w-16 aspect-video shrink-0 rounded bg-gray-100 flex items-center justify-center overflow-hidden">
+                                            <div className=" mr-3 h-24 aspect-video shrink-0 rounded bg-gray-100 flex items-center justify-center overflow-hidden">
                                                 {page.thumbnailPath ? (
                                                     // eslint-disable-next-line @next/next/no-img-element
                                                     <img
                                                         src={`/api/image?pathname=${encodeURIComponent(page.thumbnailPath)}`}
                                                         alt={page.title}
-                                                        className="w-full h-full object-cover"
+                                                        className="w-full h-full object-cover shadow-lg border rounded-md border-gray-300 "
                                                     />
                                                 ) : (
                                                     <ImageOff className="w-4 h-4 text-gray-300" />
@@ -96,6 +108,17 @@ export default function MemberPage() {
                                         <span className="text-xs text-gray-400 shrink-0">
                                             {new Date(page.updatedAt).toLocaleString('zh-TW')}
                                         </span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                confirmDeletePage(page.id, page.title);
+                                            }}
+                                            className="p-1.5 rounded shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                            aria-label="刪除網頁"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </Link>
                                 </li>
                             ))}
@@ -113,29 +136,6 @@ function Field({ label, value }: { label: string; value: string }) {
             <dt className="text-gray-400">{label}</dt>
             <dd className="text-gray-700">{value}</dd>
         </div>
-    );
-}
-
-function GoogleIcon({ className }: { className?: string }) {
-    return (
-        <svg viewBox="0 0 18 18" className={className}>
-            <path
-                fill="#4285F4"
-                d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"
-            />
-            <path
-                fill="#34A853"
-                d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"
-            />
-            <path
-                fill="#FBBC05"
-                d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.348 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"
-            />
-            <path
-                fill="#EA4335"
-                d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"
-            />
-        </svg>
     );
 }
 

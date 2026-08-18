@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { deletePageRequest } from '@/lib/delete-page';
 
 export interface PageSummary {
     id: string;
@@ -25,5 +26,12 @@ export function usePages(enabled: boolean) {
             .finally(() => setIsLoading(false));
     }, [enabled]);
 
-    return { pages, isLoading };
+    // 打失敗就丟出例外，讓呼叫端交給 GlobalDialog 的 onConfirm 接住、顯示錯誤並留在原地。
+    const deletePage = async (id: string) => {
+        const result = await deletePageRequest(id);
+        if (!result.ok) throw new Error(result.error);
+        setPages((prev) => prev.filter((page) => page.id !== id));
+    };
+
+    return { pages, isLoading, deletePage };
 }

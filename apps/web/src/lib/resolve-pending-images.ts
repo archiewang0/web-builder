@@ -1,5 +1,5 @@
 import type { CanvasSchema, ElementSchema } from '@/store/use-schema-store';
-import { extractBackgroundImageUrl } from '@/app/(edit-page)/builder/_components/property-setting/background-setting/background-image';
+import { extractBackgroundImageUrl } from '@/lib/extract-background-image-url';
 
 function isBlobUrl(value: string | undefined): value is string {
     return typeof value === 'string' && value.startsWith('blob:');
@@ -26,6 +26,12 @@ export function collectBlobUrls(schema: CanvasSchema): string[] {
     }
 
     visit(schema.elements);
+
+    const bodyBg = extractBackgroundImageUrl(schema.body?.styles?.backgroundImage);
+    if (isBlobUrl(bodyBg)) {
+        found.add(bodyBg);
+    }
+
     return [...found];
 }
 
@@ -52,5 +58,11 @@ export function replaceBlobUrls(schema: CanvasSchema, urlMap: Map<string, string
         });
     }
 
-    return { elements: visit(schema.elements) };
+    const bodyBg = extractBackgroundImageUrl(schema.body?.styles?.backgroundImage);
+    const body =
+        isBlobUrl(bodyBg) && urlMap.has(bodyBg)
+            ? { ...schema.body, styles: { ...schema.body?.styles, backgroundImage: `url(${urlMap.get(bodyBg)})` } }
+            : schema.body;
+
+    return { body, elements: visit(schema.elements) };
 }

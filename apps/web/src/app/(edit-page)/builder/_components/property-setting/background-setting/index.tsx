@@ -1,7 +1,8 @@
 import { CollapsibleSection } from '../collapsible-section';
 import { StyleChangeHandler } from '../types';
 import { BackgroundColor } from './background-color';
-import { BackgroundImage, extractBackgroundImageUrl } from './background-image';
+import { BackgroundImage } from './background-image';
+import { extractBackgroundImageUrl } from '../../../../../../lib/extract-background-image-url';
 import { BackgroundSize } from './background-size';
 
 export interface BackgroundSettingProps {

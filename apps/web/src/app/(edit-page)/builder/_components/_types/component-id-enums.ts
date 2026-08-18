@@ -3,4 +3,5 @@ export enum ComponentIdEnums {
     image = 'image',
     button = 'button',
     container = 'container',
+    body = 'body',
 }

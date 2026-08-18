@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { useEffect } from 'react';
 import { DEVICES } from '@/components/header/use-header';
 import { useHeaderStore } from '@/store/use-header-store';
-import { useSchemaStore } from '@/store/use-schema-store';
+import { useSchemaStore, BODY_ELEMENT_ID } from '@/store/use-schema-store';
 import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { PropertyBar } from './property-bar';
 import { SchemaElements } from './schema-elements';
@@ -70,9 +70,17 @@ export function Canvas({ isPreviewMode = false }: CanvasProps) {
                                 'p-2 gap-2 flex flex-col relative rounded-lg min-h-[600px]',
                                 !isPreviewMode && 'border-2 border-dashed border-gray-300'
                             )}
+                            style={schema.body?.styles as React.CSSProperties}
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
+                            // 點在畫布空白處（沒有點到任何 schema 元素，那些元素自己的 onClick
+                            // 會先 stopPropagation）代表點到的是 Body 本身，選取 Body 而不是
+                            // 讓事件繼續冒泡到 <main> 把選取清空。
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedElement(BODY_ELEMENT_ID);
+                            }}
                         >
                             {schema.elements.length === 0 && (
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

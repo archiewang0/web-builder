@@ -38,7 +38,9 @@ export default async function GalleryPage() {
                                     )}
                                 </div>
                                 <div className="p-4">
-                                    <p className="font-medium text-gray-800 truncate">{page.title}</p>
+                                    <p className="font-medium text-gray-800 truncate">
+                                        {page.title}
+                                    </p>
                                     <p className="text-sm text-gray-500 mt-1">
                                         由 {page.authorName ?? '匿名'} 建立
                                     </p>

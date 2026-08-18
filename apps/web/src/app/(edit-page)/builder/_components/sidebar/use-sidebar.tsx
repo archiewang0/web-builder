@@ -1,35 +1,35 @@
-import { Image, Layout, Square, Type } from "lucide-react";
-import { useEffect, useState } from "react";
-import { ComponentIdEnums } from "./component-id-enums";
+import { Image, Layout, Square, Type } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ComponentIdEnums } from '../_types/component-id-enums';
 
 export { ComponentIdEnums };
 
 export interface Component {
-  id: ComponentIdEnums;
-  name: string;
-  icon: React.ComponentType<{ className?: string }>;
-  category: string;
+    id: ComponentIdEnums;
+    name: string;
+    icon: React.ComponentType<{ className?: string }>;
+    category: string;
 }
 
-export function useSidebar () {
+export function useSidebar() {
     const components: Component[] = [
-        { id: ComponentIdEnums.text , name: '文字', icon: Type, category: '基礎' },
-        { id: ComponentIdEnums.image , name: '圖片', icon: Image, category: '基礎' },
-        { id: ComponentIdEnums.button , name: '按鈕', icon: Square, category: '基礎' },
+        { id: ComponentIdEnums.text, name: '文字', icon: Type, category: '基礎' },
+        { id: ComponentIdEnums.image, name: '圖片', icon: Image, category: '基礎' },
+        { id: ComponentIdEnums.button, name: '按鈕', icon: Square, category: '基礎' },
         { id: ComponentIdEnums.container, name: '容器', icon: Layout, category: '佈局' },
     ];
-    const [ dragStartTaget , setDragStartTaget] = useState<ComponentIdEnums| null>(null)
-    const [ dragEndTaget , setDragEndTaget] = useState<ComponentIdEnums| null>(null)
-    
-    useEffect(()=>{
-        if ( !dragStartTaget || !dragEndTaget) return;
-        
+    const [dragStartTaget, setDragStartTaget] = useState<ComponentIdEnums | null>(null);
+    const [dragEndTaget, setDragEndTaget] = useState<ComponentIdEnums | null>(null);
+
+    useEffect(() => {
+        if (!dragStartTaget || !dragEndTaget) return;
+
         // 代表元件抓放都完成了
-        if ( dragStartTaget === dragEndTaget){
-            setDragStartTaget(null)
-            setDragEndTaget(null)
+        if (dragStartTaget === dragEndTaget) {
+            setDragStartTaget(null);
+            setDragEndTaget(null);
         }
-    },[ dragStartTaget , dragEndTaget])
+    }, [dragStartTaget, dragEndTaget]);
 
     return {
         components,
@@ -37,6 +37,6 @@ export function useSidebar () {
         dragStartTaget,
         setDragStartTaget,
         dragEndTaget,
-        setDragEndTaget
-    }
+        setDragEndTaget,
+    };
 }

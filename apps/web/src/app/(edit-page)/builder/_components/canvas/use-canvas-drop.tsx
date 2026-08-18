@@ -71,7 +71,7 @@ export function useCanvasDrop() {
                             if ('children' in cur) cur = cur.children;
                         }
                     }
-                    return { elements };
+                    return { ...prev, elements };
                 });
                 return;
             }
@@ -98,14 +98,14 @@ export function useCanvasDrop() {
                 } else {
                     elements.splice(nodePath[0]! + 1, 0, newElement);
                 }
-                return { elements };
+                return { ...prev, elements };
             });
             return;
         }
 
         if (isLeaf) return;
 
-        setSchema((prev) => ({ elements: [...prev.elements, newElement] }));
+        setSchema((prev) => ({ ...prev, elements: [...prev.elements, newElement] }));
     };
 
     return { dragHint, handleDragOver, handleDragLeave, handleDrop };

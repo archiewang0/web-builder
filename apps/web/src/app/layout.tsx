@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import { Inter, Roboto, Poppins, Playfair_Display, Montserrat } from 'next/font/google';
 import { SessionProvider } from 'next-auth/react';
+import { GlobalDialog } from '@/components/global-dialog';
 import './globals.css';
 
 const geistSans = localFont({
@@ -59,6 +60,7 @@ export default function RootLayout({
                 suppressHydrationWarning
             >
                 <SessionProvider>{children}</SessionProvider>
+                <GlobalDialog />
             </body>
         </html>
     );

@@ -26,7 +26,9 @@ export function collectBlobPathnames(
                 const pathname = extractPathname(el.content);
                 if (pathname) found.add(pathname);
             }
-            const bgPathname = extractPathname(extractBackgroundImageUrl(el.styles?.backgroundImage));
+            const bgPathname = extractPathname(
+                extractBackgroundImageUrl(el.styles?.backgroundImage)
+            );
             if (bgPathname) found.add(bgPathname);
             if ('children' in el) {
                 visit(el.children);
@@ -35,6 +37,10 @@ export function collectBlobPathnames(
     }
 
     visit(schema.elements);
+
+    const bodyBgPathname = extractPathname(extractBackgroundImageUrl(schema.body?.styles?.backgroundImage));
+    if (bodyBgPathname) found.add(bodyBgPathname);
+
     if (thumbnailPath) found.add(thumbnailPath);
     return [...found];
 }

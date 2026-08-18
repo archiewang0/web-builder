@@ -37,7 +37,7 @@ export default async function PublicSitePage({ params }: PageProps) {
     }
 
     return (
-        <div>
+        <div style={page.schema.body?.styles as React.CSSProperties}>
             <RenderSchemaElements elements={page.schema.elements} />
         </div>
     );

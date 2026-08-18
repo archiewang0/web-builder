@@ -36,7 +36,7 @@ export default function WebBuilderPage() {
     }
 
     return (
-        <div className="flex-1 flex overflow-hidden bg-gray-50">
+        <div className="flex-1 flex ">
             {/* 左側面板：裝置切換／預覽／儲存工具列常駐，組件庫與頁面結構在預覽模式下收起 */}
             <Sidebar
                 components={components}

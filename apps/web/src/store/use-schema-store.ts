@@ -2,6 +2,24 @@ import { create } from 'zustand';
 import { ComponentIdEnums } from '@/app/(edit-page)/builder/_components/sidebar/use-sidebar';
 import { buildElementMap, ElementMapNode } from '@/app/(edit-page)/builder/_components/canvas/lib';
 
+// 選取狀態用這個值代表選到的是 Body（畫布背景），不是 elements 陣列裡的某個節點。
+// 用固定字串而不是擴充 selectedElement 的型別，是因為真正的元素 id 都是 uuid，不會跟它撞到。
+export const BODY_ELEMENT_ID = '__body__';
+
+// 樣式屬性，元素跟 Body 共用同一份形狀
+export interface StylesSchema {
+    width?: string;
+    height?: string;
+    padding?: string;
+    margin?: string;
+    backgroundColor?: string;
+    color?: string;
+    fontSize?: string;
+    fontFamily?: string;
+    fontWeight?: string;
+    [key: string]: string | undefined;
+}
+
 // 基礎元素屬性（所有元素共用）
 interface BaseElementSchema {
     id: string;
@@ -11,18 +29,7 @@ interface BaseElementSchema {
         x: number;
         y: number;
     };
-    styles?: {
-        width?: string;
-        height?: string;
-        padding?: string;
-        margin?: string;
-        backgroundColor?: string;
-        color?: string;
-        fontSize?: string;
-        fontFamily?: string;
-        fontWeight?: string;
-        [key: string]: string | undefined;
-    };
+    styles?: StylesSchema;
     className?: string;
     props?: Record<string, any>;
 }
@@ -44,8 +51,16 @@ export interface ContainerElementSchema extends BaseElementSchema {
 // 聯合類型：元素可以是 Leaf 或 Container
 export type ElementSchema = LeafElementSchema | ContainerElementSchema;
 
+// Body：畫布的根背景層，每份頁面固定只有一個。不進 elements 陣列，
+// 不能拖曳新增也不能刪除，只提供背景色／背景圖設定，沿用既有的 BackgroundSetting UI。
+export interface BodySchema {
+    styles?: StylesSchema;
+}
+
 // 主 Schema 類型（Canvas 的完整結構）
 export interface CanvasSchema {
+    // 此功能上線前存的舊頁面不會有這個欄位，標成 optional，讀取時要自行補預設值。
+    body?: BodySchema;
     elements: ElementSchema[];
 }
 
@@ -59,13 +74,14 @@ interface SchemaStore {
     updateElement: (id: string, updates: Partial<ElementSchema>) => void;
     deleteElement: (id: string) => void;
     addElement: (element: ElementSchema, parentId?: string) => void;
+    updateBodyStyles: (styles: StylesSchema) => void;
 }
 
 // schema 變動頻繁，且被畫布、屬性面板、結構樹等多層元件共用。
 // 用 Zustand 讓各元件用 selector 只訂閱自己需要的欄位，
 // 避免舊版 Context 那種「value 物件每次 render 都重建，導致所有 consumer 全部重渲染」的問題。
 export const useSchemaStore = create<SchemaStore>((set, get) => ({
-    schema: { elements: [] },
+    schema: { body: {}, elements: [] },
     elementMap: new Map(),
 
     setSchema: (updater) => {
@@ -100,7 +116,7 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
                 }
             }
 
-            return { elements: newElements };
+            return { ...prevSchema, elements: newElements };
         });
     },
 
@@ -127,7 +143,7 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
                 current.splice(path[path.length - 1]!, 1);
             }
 
-            return { elements: newElements };
+            return { ...prevSchema, elements: newElements };
         });
     },
 
@@ -157,13 +173,21 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
                     }
                 }
 
-                return { elements: newElements };
+                return { ...prevSchema, elements: newElements };
             });
         } else {
             // 加到根層級
             get().setSchema((prevSchema) => ({
+                ...prevSchema,
                 elements: [...prevSchema.elements, element],
             }));
         }
+    },
+
+    updateBodyStyles: (styles) => {
+        get().setSchema((prevSchema) => ({
+            ...prevSchema,
+            body: { ...prevSchema.body, styles },
+        }));
     },
 }));

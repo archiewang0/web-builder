@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { ComponentIdEnums } from '@/app/(edit-page)/builder/_components/sidebar/component-id-enums';
+import { ComponentIdEnums } from '@/app/(edit-page)/builder/_components/_types/component-id-enums';
 import type { ElementSchema } from '@/store/use-schema-store';
 
 const GRID_COLS: Record<number, string> = {
