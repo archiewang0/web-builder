@@ -2,9 +2,10 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { ImageOff, Trash2 } from 'lucide-react';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import { usePages } from './use-pages';
 import { useCreatePage } from '@/lib/use-create-page';
+import { deleteAccountRequest } from '@/lib/delete-account';
 import { useDialogStore } from '@/store/use-dialog-store';
 import { GoogleIcon } from '@/icons/google-icon';
 
@@ -21,6 +22,21 @@ export default function MemberPage() {
             confirmText: '確定刪除',
             danger: true,
             onConfirm: () => deletePage(id),
+        });
+    };
+
+    const confirmDeleteAccount = () => {
+        useDialogStore.getState().open({
+            title: '刪除帳號',
+            description:
+                '確定要刪除帳號嗎？您建立的所有網頁與圖片都會一併永久刪除，此操作無法復原。',
+            confirmText: '確定刪除',
+            danger: true,
+            onConfirm: async () => {
+                const result = await deleteAccountRequest();
+                if (!result.ok) throw new Error(result.error);
+                await signOut({ callbackUrl: '/' });
+            },
         });
     };
 
@@ -62,6 +78,17 @@ export default function MemberPage() {
                         <Field label="Email 已驗證" value={user.email_verified ? '是' : '否'} />
                         <Field label="語言地區" value={user.locale ?? '-'} />
                     </dl>
+
+                    <hr className=" mt-10" />
+
+                    <div className=" flex justify-end pt-5">
+                        <button
+                            onClick={confirmDeleteAccount}
+                            className="text-sm px-3 py-1.5 w-[150px] bg-gray-200  hover:bg-red-600 hover:text-white text-gray-400 rounded-lg transition-colors"
+                        >
+                            刪除帳號
+                        </button>
+                    </div>
                 </section>
 
                 {/* 使用者自建網頁 */}

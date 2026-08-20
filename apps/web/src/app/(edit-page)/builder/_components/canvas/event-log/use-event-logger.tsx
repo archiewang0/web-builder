@@ -1,14 +1,26 @@
 import { useState, useCallback } from 'react';
 import { ElementSchema } from '@/store/use-schema-store';
+import type { DropPosition } from '../lib';
 
 export interface DragEventEntry {
     id: number;
     timestamp: string;
     from: string;
     to: string;
+    // dragStart/取消拖曳/drop 在 Body 這幾種情況沒有真正的插入位置，留空；
+    // 只有成功 reorder 到某個元素上才會帶這個欄位。
+    dropPosition?: DropPosition;
     elementsBefore: ElementSchema[];
     elementsAfter: ElementSchema[];
 }
+
+export type LogEvent = (
+    from: string,
+    to: string,
+    elementsBefore: ElementSchema[],
+    elementsAfter: ElementSchema[],
+    dropPosition?: DropPosition
+) => void;
 
 export function useEventLogger() {
     const [eventLog, setEventLog] = useState<DragEventEntry[]>([]);
@@ -18,13 +30,15 @@ export function useEventLogger() {
             from: string,
             to: string,
             elementsBefore: ElementSchema[],
-            elementsAfter: ElementSchema[]
+            elementsAfter: ElementSchema[],
+            dropPosition?: DropPosition
         ) => {
             const entry: DragEventEntry = {
                 id: Date.now(),
                 timestamp: new Date().toISOString(),
                 from,
                 to,
+                dropPosition,
                 elementsBefore,
                 elementsAfter,
             };
@@ -50,7 +64,7 @@ export function useEventLogger() {
 it('drag ${entry.from} → ${entry.to}', () => {
     const elementsBefore = ${JSON.stringify(entry.elementsBefore, null, 8)};
     const map = buildElementMap(elementsBefore);
-    const result = computeReorder(elementsBefore, map, '${entry.from}', '${entry.to}');
+    const result = computeReorder(elementsBefore, map, '${entry.from}', '${entry.to}', '${entry.dropPosition ?? 'inside'}');
     expect(result).toEqual(${JSON.stringify(entry.elementsAfter, null, 8)});
 });`.trim()
             )

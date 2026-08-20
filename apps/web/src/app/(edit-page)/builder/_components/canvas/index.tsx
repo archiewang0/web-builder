@@ -1,13 +1,15 @@
 import classNames from 'classnames';
 import { Plus } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { DEVICES } from '@/components/header/use-header';
 import { useHeaderStore } from '@/store/use-header-store';
 import { useSchemaStore, BODY_ELEMENT_ID } from '@/store/use-schema-store';
 import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { PropertyBar } from './property-bar';
 import { SchemaElements } from './schema-elements';
-import { useCanvasDrop } from './use-canvas-drop';
+import { useCanvasDrop } from '../_hooks/use-canvas-drop';
+import { useEventLogger } from './event-log/use-event-logger';
+import { EventLoggerPanel } from './event-log/event-logger-panel';
 
 interface CanvasProps {
     isPreviewMode?: boolean;
@@ -19,7 +21,15 @@ export function Canvas({ isPreviewMode = false }: CanvasProps) {
     const deleteElement = useSchemaStore((state) => state.deleteElement);
     const selectedElement = useSelectedElementStore((state) => state.selectedElement);
     const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
-    const { dragHint, handleDragOver, handleDragLeave, handleDrop } = useCanvasDrop();
+    const { eventLog, logEvent, clearLog, copyAsJSON, copyAsTest } = useEventLogger();
+    // 跟 schema-elements.tsx 裡目前正在拖曳的元素 id 同步，讓 useCanvasDrop（drop 在
+    // Body 空白處）跟 schema-elements.tsx 的 dragEnd 能判斷「這次拖曳是否已經被記錄」，
+    // 不用把 draggedId 整個狀態都提升上來。
+    const draggedIdRef = useRef<string | null>(null);
+    const { dragHint, handleDragOver, handleDragLeave, handleDrop } = useCanvasDrop(
+        logEvent,
+        draggedIdRef
+    );
 
     useEffect(() => {
         if (!selectedElement) return;
@@ -67,7 +77,7 @@ export function Canvas({ isPreviewMode = false }: CanvasProps) {
                         <div
                             id="canvas"
                             className={classNames(
-                                'p-2 gap-2 flex flex-col relative rounded-lg min-h-[600px]',
+                                'p-4 py-10 gap-10 flex flex-col relative rounded-lg min-h-[600px]',
                                 !isPreviewMode && 'border-2 border-dashed border-gray-300'
                             )}
                             style={schema.body?.styles as React.CSSProperties}
@@ -96,7 +106,11 @@ export function Canvas({ isPreviewMode = false }: CanvasProps) {
                                 </div>
                             )}
                             {schema.elements.length > 0 && (
-                                <SchemaElements isPreviewMode={isPreviewMode} />
+                                <SchemaElements
+                                    isPreviewMode={isPreviewMode}
+                                    logEvent={logEvent}
+                                    draggedIdRef={draggedIdRef}
+                                />
                             )}
                         </div>
                     </div>
@@ -113,6 +127,13 @@ export function Canvas({ isPreviewMode = false }: CanvasProps) {
                     <span>只能放在 Container 內</span>
                 </div>
             )}
+
+            <EventLoggerPanel
+                eventLog={eventLog}
+                onClear={clearLog}
+                onCopyJSON={copyAsJSON}
+                onCopyTest={copyAsTest}
+            />
         </main>
     );
 }

@@ -1,13 +1,41 @@
-import { useState } from 'react';
-import { useSchemaStore, ElementSchema, ContainerElementSchema } from '@/store/use-schema-store';
+import { useState, type RefObject } from 'react';
+import {
+    useSchemaStore,
+    ElementSchema,
+    ContainerElementSchema,
+    BODY_ELEMENT_ID,
+} from '@/store/use-schema-store';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
-import { createElement } from './lib';
+import { createElement } from '../canvas/lib';
+import type { LogEvent } from '../canvas/event-log/use-event-logger';
+import { useThrottle } from '@/lib/use-throttle';
 
-export function useCanvasDrop() {
+// 這個 hook 的 handler 掛在 #canvas 本身（最外層畫布容器），只有事件冒泡到這裡才會觸發，
+// 對應兩種不同來源的拖曳，靠 dataTransfer 的 type 分辨：
+//
+// 1. 從 sidebar 拖新元件進來（component-palette.tsx 設定 text/plain，非 container
+//    元件還會多設 application/component-leaf）。isLeafDrag 分支（懸停容器偵測、🚫
+//    提示、throttledLogContainerHover）只服務這個來源。
+// 2. 拖曳既有元素（schema-elements.tsx 設定 application/element-id）但放到畫布空白處
+//    （Body）——既有元素懸停/放在「別的元素上」時，會被 schema-elements.tsx 自己的
+//    handler 攔截並 stopPropagation，事件根本冒泡不到這裡；只有放到空白 Body 才會
+//    冒泡進來，對應下面 handleDrop 開頭那段 application/element-id 的 no-op + log。
+//
+// 換句話說：canvas 內部既有元素的搬移／reorder，永遠不會觸發 isLeafDrag 那個分支
+// （它們不會設定 application/component-leaf），只有在放到 Body 時才會摸到這個 hook。
+export function useCanvasDrop(logEvent: LogEvent, draggedIdRef: RefObject<string | null>) {
     const schema = useSchemaStore((state) => state.schema);
     const setSchema = useSchemaStore((state) => state.setSchema);
     const elementMap = useSchemaStore((state) => state.elementMap);
     const [dragHint, setDragHint] = useState<{ x: number; y: number } | null>(null);
+
+    // dragover 每次滑鼠移動都會觸發，只節流「記錄目前懸停在哪個 container」這件事，
+    // e.preventDefault()／dropEffect／dragHint 這些每個 tick 都要跑，不能一起節流，
+    // 否則會漏掉 preventDefault（瀏覽器不允許 drop）或讓 🚫 提示的座標卡頓。
+    const throttledLogContainerHover = useThrottle((containerId: string) => {
+        logEvent(containerId, BODY_ELEMENT_ID, schema.elements, schema.elements);
+        console.log('run throttledLogContainerHover');
+    }, 50);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -16,6 +44,10 @@ export function useCanvasDrop() {
             const insideContainer = (e.target as HTMLElement).closest(
                 `[data-component-id="${ComponentIdEnums.container}"]`
             );
+            const containerId = insideContainer?.getAttribute('data-element-id');
+            if (process.env.NODE_ENV === 'development' && containerId) {
+                throttledLogContainerHover(containerId);
+            }
             if (!insideContainer) {
                 e.dataTransfer.dropEffect = 'none';
                 setDragHint({ x: e.clientX, y: e.clientY });
@@ -36,8 +68,21 @@ export function useCanvasDrop() {
         e.preventDefault();
         setDragHint(null);
 
+        // 能執行到這裡代表 drop 事件冒泡到了 #canvas 本身，沒有被 schema-elements.tsx
+        // 的 handleElementDrop 攔截（它 drop 在既有元素上時一定會 stopPropagation）——
+        // 也就是使用者把既有元素拖到畫布空白處（Body），不是拖到別的元素上。
+        // 目前這裡本來就不處理既有元素的 reorder，維持原本的 no-op，只補記一筆事件。
         const draggedElementId = e.dataTransfer.getData('application/element-id');
-        if (draggedElementId) return;
+        if (draggedElementId) {
+            if (process.env.NODE_ENV === 'development') {
+                logEvent(draggedElementId, BODY_ELEMENT_ID, schema.elements, schema.elements);
+                console.log('🟣 [element drag] drop on body:', draggedElementId);
+            }
+            // dragend 還會在 schema-elements.tsx 觸發一次，把這裡清空讓它知道
+            // 這次已經被記錄成「拖到 body」，不要又記一筆「取消拖曳」。
+            draggedIdRef.current = null;
+            return;
+        }
 
         const componentId = e.dataTransfer.getData('text/plain') as ComponentIdEnums;
         const isLeaf =
@@ -57,7 +102,11 @@ export function useCanvasDrop() {
             const targetNode = elementMap.get(targetElementId);
             if (!targetNode) return;
 
-            const { path: nodePath, parent: nodeParent, element: { componentId: nodeComponentId, id: nodeElementId } } = targetNode;
+            const {
+                path: nodePath,
+                parent: nodeParent,
+                element: { componentId: nodeComponentId, id: nodeElementId },
+            } = targetNode;
 
             if (nodeComponentId === ComponentIdEnums.container) {
                 setSchema((prev) => {

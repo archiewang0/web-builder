@@ -51,13 +51,18 @@ export function getElementAtPath(elements: ElementSchema[], path: number[]): Ele
     return parentArray[path[path.length - 1]!]!;
 }
 
+// 'before'/'after' = 插在 target 同層的前面／後面（變成兄弟節點）；
+// 'inside' 只對 container 類型的 target 有意義，代表塞進它的 children 尾端。
+export type DropPosition = 'before' | 'after' | 'inside';
+
 // 計算移動後的 elements（pure，不修改原始資料）
 // 同時給 drag preview（useMemo）和真正 drop 使用
 export function computeReorder(
     elements: ElementSchema[],
     elementMap: Map<string, ElementMapNode>,
     draggedId: string,
-    targetId: string
+    targetId: string,
+    dropPosition: DropPosition
 ): ElementSchema[] {
     if (draggedId === targetId) return elements;
 
@@ -92,16 +97,34 @@ export function computeReorder(
         targetPath[sharedPrefixLevel]!--;
     }
 
-    // Step 3: 插入到目標位置
-    if (targetNode.element.componentId === ComponentIdEnums.container) {
+    // Step 3: 依 dropPosition 插入到目標位置。'inside' 只有 target 是 container
+    // 才塞進它的 children；其餘情況（包含 target 不是 container 卻收到
+    // 'inside' 的防呆）都當成插在 target 同層的前面／後面。
+    if (dropPosition === 'inside' && targetNode.element.componentId === ComponentIdEnums.container) {
         const container = getElementAtPath(newElements, targetPath) as ContainerElementSchema;
         container.children.push(draggedElement!);
     } else {
         const targetParentArray = getParentArray(newElements, targetPath);
-        targetParentArray.splice(targetPath[targetPath.length - 1]!, 0, draggedElement!);
+        const targetIndex = targetPath[targetPath.length - 1]!;
+        const insertAt = dropPosition === 'after' ? targetIndex + 1 : targetIndex;
+        targetParentArray.splice(insertAt, 0, draggedElement!);
     }
 
     return newElements;
+}
+
+// 依滑鼠 Y 座標相對於 target 元素的位置，決定要插在它前面／後面，還是（僅限
+// container）塞進它裡面。非 container target 沒有「裡面」，只分上下兩半。
+export function getDropPosition(
+    targetRect: DOMRect,
+    clientY: number,
+    isContainer: boolean
+): DropPosition {
+    const ratio = (clientY - targetRect.top) / targetRect.height;
+    if (!isContainer) return ratio < 0.5 ? 'before' : 'after';
+    if (ratio < 0.25) return 'before';
+    if (ratio > 0.75) return 'after';
+    return 'inside';
 }
 
 // 依 componentId 建出新元素（pure factory，不依賴 React）

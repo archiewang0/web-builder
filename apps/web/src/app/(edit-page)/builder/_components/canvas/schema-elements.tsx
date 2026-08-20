@@ -1,42 +1,49 @@
 import { useSchemaStore, ElementSchema } from '@/store/use-schema-store';
-import React, { JSX, useMemo, useState } from 'react';
+import classNames from 'classnames';
+import React, { JSX, type RefObject } from 'react';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
 import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { ButtonElement, ContainerElement, ImgElement, TextElement } from './elements';
-import { computeReorder } from './lib';
-import { useEventLogger } from './use-event-logger';
-// import { EventLoggerPanel } from './event-logger-panel';
-import { useThrottle } from '@/lib/use-throttle';
+import type { LogEvent } from './event-log/use-event-logger';
+import { useElementDrag } from './use-element-drag';
 
 interface SchemaElementsProps {
     isPreviewMode?: boolean;
+    logEvent: LogEvent;
+    draggedIdRef: RefObject<string | null>;
 }
 
-export function SchemaElements({ isPreviewMode = false }: SchemaElementsProps) {
-    const schema = useSchemaStore((state) => state.schema);
-    const setSchema = useSchemaStore((state) => state.setSchema);
-    const elementMap = useSchemaStore((state) => state.elementMap);
+export function SchemaElements({ isPreviewMode = false, logEvent, draggedIdRef }: SchemaElementsProps) {
     const updateElement = useSchemaStore((state) => state.updateElement);
     const selectedElement = useSelectedElementStore((state) => state.selectedElement);
     const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
-    const [draggedId, setDraggedId] = useState<string | null>(null);
-    const [dropTargetId, setDropTargetId] = useState<string | null>(null);
-    const { eventLog, logEvent, clearLog, copyAsJSON, copyAsTest } = useEventLogger();
 
-    // dragOver 時即時推導預覽畫面，只有 dropTargetId 換人才重算
-    const shadowElements = useMemo(() => {
-        if (!draggedId || !dropTargetId || draggedId === dropTargetId) {
-            return schema.elements;
-        }
-        return computeReorder(schema.elements, elementMap, draggedId, dropTargetId);
-    }, [schema.elements, elementMap, draggedId, dropTargetId]);
+    const {
+        draggedId,
+        dropTargetId,
+        dropPosition,
+        shadowElements,
+        handleElementDragStart,
+        handleElementDragEnd,
+        handleElementDragOver,
+        handleElementDrop,
+    } = useElementDrag(logEvent, draggedIdRef);
 
     function SchemaElementRender(data: ElementSchema): JSX.Element {
+        const isDropTarget = data.id === dropTargetId && data.id !== draggedId;
         const elementProperty = {
             ['data-component-id']: data.componentId,
             ['data-element-id']: data.id,
-            ['selected-style']:
-                data.id === selectedElement ? 'relative z-10 ring-2 ring-blue-500' : '',
+            ['selected-style']: classNames(
+                data.id === selectedElement && 'relative z-10 ring-2 ring-blue-500',
+                isDropTarget &&
+                    dropPosition === 'inside' &&
+                    'relative z-10 ring-2 ring-blue-400 ring-dashed',
+                // before/after 是插入線：在 target 的上緣／下緣畫一條粗線，
+                // 提示放手後會插在它的前面還是後面，而不是塞進它裡面。
+                isDropTarget && dropPosition === 'before' && 'relative border-t-4 border-t-blue-500',
+                isDropTarget && dropPosition === 'after' && 'relative border-b-4 border-b-blue-500'
+            ),
             draggable: true,
             style: {
                 ...(data.styles as React.CSSProperties),
@@ -107,71 +114,15 @@ export function SchemaElements({ isPreviewMode = false }: SchemaElementsProps) {
         }
     }
 
-    // --- Element drag 事件委派 handlers ---
-    const handleElementDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-        const el = (e.target as HTMLElement).closest('[data-element-id]');
-        const id = el?.getAttribute('data-element-id');
-        if (!id) return;
-        e.dataTransfer.setData('application/element-id', id);
-        e.dataTransfer.effectAllowed = 'move';
-        setDraggedId(id);
-        setSelectedElement(id);
-        console.log('🟢 [element drag] dragStart:', id);
-    };
-
-    const handleElementDragEnd = (_e: React.DragEvent<HTMLDivElement>) => {
-        // drop 沒有發生（拖到無效區域）時還原預覽
-        setDraggedId(null);
-        setDropTargetId(null);
-        console.log('🔴 [element drag] dragEnd');
-    };
-
-    const throttledUpdateTarget = useThrottle((e: React.DragEvent<HTMLDivElement>) => {
-        const el = (e.target as HTMLElement).closest('[data-element-id]');
-        const id = el?.getAttribute('data-element-id');
-        // draggedId 本身不能是 drop target
-        if (id && id !== dropTargetId && id !== draggedId) {
-            setDropTargetId(id);
-            console.log('🟡 [element drag] dragOver target:', id);
-        }
-    }, 50);
-
-    const handleElementDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        if (!e.dataTransfer.types.includes('application/element-id')) return;
-        // preventDefault / stopPropagation 每次都要執行，瀏覽器才允許 drop
-        e.preventDefault();
-        e.stopPropagation();
-        e.dataTransfer.dropEffect = 'move';
-        throttledUpdateTarget(e);
-    };
-
-    const handleElementDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        const id = e.dataTransfer.getData('application/element-id');
-        if (!id) return;
-        e.preventDefault();
-        e.stopPropagation();
-
-        // 記錄此次互動，再 commit
-        if (draggedId && dropTargetId) {
-            logEvent(draggedId, dropTargetId, schema.elements, shadowElements);
-        }
-        setSchema((prev) => ({ ...prev, elements: shadowElements }));
-        setDraggedId(null);
-        setDropTargetId(null);
-        console.log('🔵 [element drag] drop committed');
-    };
-
     return (
-        <>
-            <div
-                className="contents"
-                onDragStart={handleElementDragStart}
-                onDragEnd={handleElementDragEnd}
-                onDragOver={handleElementDragOver}
-                onDrop={handleElementDrop}
-            >
-                {shadowElements.map((element) => SchemaElementRender(element))}
-            </div>
-        </>
+        <div
+            className="contents"
+            onDragStart={handleElementDragStart}
+            onDragEnd={handleElementDragEnd}
+            onDragOver={handleElementDragOver}
+            onDrop={handleElementDrop}
+        >
+            {shadowElements.map((element) => SchemaElementRender(element))}
+        </div>
     );
 }

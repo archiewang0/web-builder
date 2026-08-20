@@ -111,3 +111,19 @@ export async function deletePageForUser(id: string, userId: string) {
         .returning();
     return page ?? null;
 }
+
+// 刪除帳號：users FK 對 pages 設了 onDelete: 'cascade'，刪 user row 時 Postgres
+// 會自動連帶刪掉他所有的 pages，這裡不用手動刪 pages。但刪之前要先把每份頁面
+// 的 schema/縮圖記下來，回傳給呼叫端去清 Blob store 裡對應的圖片檔案。
+export async function deleteUserAccount(userId: string) {
+    return db.transaction(async (tx) => {
+        const userPages = await tx
+            .select({ schema: pages.schema, thumbnailPath: pages.thumbnailPath })
+            .from(pages)
+            .where(eq(pages.userId, userId));
+
+        await tx.delete(users).where(eq(users.id, userId));
+
+        return userPages;
+    });
+}
