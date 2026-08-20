@@ -1,35 +1,30 @@
 import classNames from 'classnames';
 import { Plus } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import { DEVICES } from '@/components/header/use-header';
 import { useHeaderStore } from '@/store/use-header-store';
 import { useSchemaStore, BODY_ELEMENT_ID } from '@/store/use-schema-store';
 import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { PropertyBar } from './property-bar';
 import { SchemaElements } from './schema-elements';
-import { useCanvasDrop } from '../_hooks/use-canvas-drop';
-import { useEventLogger } from './event-log/use-event-logger';
-import { EventLoggerPanel } from './event-log/event-logger-panel';
+import type { DragVisualState } from './schema-element-node';
 
 interface CanvasProps {
     isPreviewMode?: boolean;
+    dragState: DragVisualState;
 }
 
-export function Canvas({ isPreviewMode = false }: CanvasProps) {
+export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
     const activeDevice = useHeaderStore((state) => state.activeDevice);
     const schema = useSchemaStore((state) => state.schema);
     const deleteElement = useSchemaStore((state) => state.deleteElement);
     const selectedElement = useSelectedElementStore((state) => state.selectedElement);
     const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
-    const { eventLog, logEvent, clearLog, copyAsJSON, copyAsTest } = useEventLogger();
-    // 跟 schema-elements.tsx 裡目前正在拖曳的元素 id 同步，讓 useCanvasDrop（drop 在
-    // Body 空白處）跟 schema-elements.tsx 的 dragEnd 能判斷「這次拖曳是否已經被記錄」，
-    // 不用把 draggedId 整個狀態都提升上來。
-    const draggedIdRef = useRef<string | null>(null);
-    const { dragHint, handleDragOver, handleDragLeave, handleDrop } = useCanvasDrop(
-        logEvent,
-        draggedIdRef
-    );
+
+    // #canvas 本身是「根層級」的 drop 目標——既有元素拖到這裡（沒有落在任何元素上）、
+    // 或 sidebar 新元件拖到空白處，都會落到這個 droppable，交給 useCanvasDnd 判斷。
+    const { setNodeRef: setBodyDropRef } = useDroppable({ id: BODY_ELEMENT_ID });
 
     useEffect(() => {
         if (!selectedElement) return;
@@ -75,15 +70,14 @@ export function Canvas({ isPreviewMode = false }: CanvasProps) {
                         }}
                     >
                         <div
+                            ref={setBodyDropRef}
                             id="canvas"
                             className={classNames(
+                                'z-0',
                                 'p-4 py-10 gap-10 flex flex-col relative rounded-lg min-h-[600px]',
                                 !isPreviewMode && 'border-2 border-dashed border-gray-300'
                             )}
                             style={schema.body?.styles as React.CSSProperties}
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
                             // 點在畫布空白處（沒有點到任何 schema 元素，那些元素自己的 onClick
                             // 會先 stopPropagation）代表點到的是 Body 本身，選取 Body 而不是
                             // 讓事件繼續冒泡到 <main> 把選取清空。
@@ -108,8 +102,8 @@ export function Canvas({ isPreviewMode = false }: CanvasProps) {
                             {schema.elements.length > 0 && (
                                 <SchemaElements
                                     isPreviewMode={isPreviewMode}
-                                    logEvent={logEvent}
-                                    draggedIdRef={draggedIdRef}
+                                    elements={schema.elements}
+                                    dragState={dragState}
                                 />
                             )}
                         </div>
@@ -117,23 +111,6 @@ export function Canvas({ isPreviewMode = false }: CanvasProps) {
                 </div>
                 {!isPreviewMode && <PropertyBar />}
             </div>
-
-            {dragHint && (
-                <div
-                    className="fixed z-50 flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded shadow-lg pointer-events-none"
-                    style={{ left: dragHint.x + 14, top: dragHint.y + 14 }}
-                >
-                    <span>🚫</span>
-                    <span>只能放在 Container 內</span>
-                </div>
-            )}
-
-            <EventLoggerPanel
-                eventLog={eventLog}
-                onClear={clearLog}
-                onCopyJSON={copyAsJSON}
-                onCopyTest={copyAsTest}
-            />
         </main>
     );
 }

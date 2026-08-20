@@ -191,3 +191,16 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
         }));
     },
 }));
+
+declare global {
+    interface Window {
+        printSchema: () => void;
+    }
+}
+
+// 開發除錯用：在 console 打 window.printSchema() 印出目前的 schema。
+if (typeof window !== 'undefined') {
+    window.printSchema = () => {
+        console.log(JSON.parse(JSON.stringify(useSchemaStore.getState().schema)));
+    };
+}

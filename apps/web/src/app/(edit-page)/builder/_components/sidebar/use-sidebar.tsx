@@ -1,5 +1,4 @@
 import { Image, Layout, Square, Type } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { ComponentIdEnums } from '../_types/component-id-enums';
 
 export { ComponentIdEnums };
@@ -18,25 +17,6 @@ export function useSidebar() {
         { id: ComponentIdEnums.button, name: '按鈕', icon: Square, category: '基礎' },
         { id: ComponentIdEnums.container, name: '容器', icon: Layout, category: '佈局' },
     ];
-    const [dragStartTaget, setDragStartTaget] = useState<ComponentIdEnums | null>(null);
-    const [dragEndTaget, setDragEndTaget] = useState<ComponentIdEnums | null>(null);
 
-    useEffect(() => {
-        if (!dragStartTaget || !dragEndTaget) return;
-
-        // 代表元件抓放都完成了
-        if (dragStartTaget === dragEndTaget) {
-            setDragStartTaget(null);
-            setDragEndTaget(null);
-        }
-    }, [dragStartTaget, dragEndTaget]);
-
-    return {
-        components,
-
-        dragStartTaget,
-        setDragStartTaget,
-        dragEndTaget,
-        setDragEndTaget,
-    };
+    return { components };
 }

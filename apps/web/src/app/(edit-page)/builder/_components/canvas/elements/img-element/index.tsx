@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { Image as ImageIcon } from 'lucide-react';
 import { useImageResize } from './use-image-resize';
@@ -31,7 +31,18 @@ export function ImgElement({
         onResizeWidth,
     });
 
-    const { style, ...restProperty } = elementProperty;
+    // elementProperty.ref 是 dnd-kit 的 setNodeRef（穩定的 callback），這裡還需要
+    // 自己的 wrapperRef 量測尺寸做縮放，兩個 ref 要一起呼叫——合併函式本身也要用
+    // useCallback 記住，不然每次 render 都是新函式，會觸發 dndRef 內部的
+    // re-register，變成無限迴圈（跟 schema-element-node.tsx 修過的問題一樣）。
+    const { style, ref: dndRef, ...restProperty } = elementProperty;
+    const setRefs = useCallback(
+        (node: HTMLDivElement | null) => {
+            wrapperRef.current = node;
+            if (typeof dndRef === 'function') dndRef(node);
+        },
+        [dndRef, wrapperRef]
+    );
     const hasImage = Boolean(content);
 
     // 換圖時先清掉舊尺寸，避免顯示上一張圖片殘留的自然尺寸
@@ -46,7 +57,7 @@ export function ImgElement({
 
     return (
         <div
-            ref={wrapperRef}
+            ref={setRefs}
             {...restProperty}
             onDragStart={handleDragStart}
             style={
@@ -94,11 +105,13 @@ export function ImgElement({
             )}
             <div
                 draggable={false}
+                onPointerDownCapture={(e) => e.stopPropagation()}
                 onMouseDown={startResize('left')}
                 className={classNames(handleClassName, 'left-0 -translate-x-1/2')}
             />
             <div
                 draggable={false}
+                onPointerDownCapture={(e) => e.stopPropagation()}
                 onMouseDown={startResize('right')}
                 className={classNames(handleClassName, 'right-0 translate-x-1/2')}
             />

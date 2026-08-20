@@ -1,6 +1,5 @@
 import classNames from 'classnames';
-import { Dispatch, SetStateAction } from 'react';
-import { Component, ComponentIdEnums } from './use-sidebar';
+import { Component } from './use-sidebar';
 import { useHeaderStore } from '@/store/use-header-store';
 import { useResizablePanel } from '@/lib/use-resizable-panel';
 import { Toolbar } from './toolbar';
@@ -10,11 +9,9 @@ import { DeletePageButton } from './delete-page-button';
 
 interface SidebarProps {
     components: Component[];
-    setDragStartTaget: Dispatch<SetStateAction<ComponentIdEnums | null>>;
-    setDragEndTaget: Dispatch<SetStateAction<ComponentIdEnums | null>>;
 }
 
-export function Sidebar({ components, setDragStartTaget, setDragEndTaget }: SidebarProps) {
+export function Sidebar({ components }: SidebarProps) {
     const isPreviewMode = useHeaderStore((state) => state.isPreviewMode);
     const { panelRef, width, handleResizeStart, isCollapsed } = useResizablePanel({
         edge: 'left',
@@ -27,18 +24,14 @@ export function Sidebar({ components, setDragStartTaget, setDragEndTaget }: Side
     if (isPreviewMode) return null;
 
     return (
-        <aside ref={panelRef} style={{ width }} className="relative shrink-0 overflow-hidden">
+        <aside ref={panelRef} style={{ width }} className="relative shrink-0 overflow-hidden z-10">
             {/* 內層固定 w-64（256px），對齊 sidebar 最右側；外層寬度縮小時只裁切內層，不會擠壓裡面的文字 */}
             <div className="absolute right-0 top-0 h-full w-64 flex flex-col bg-white border-r border-gray-200 shadow-sm overflow-y-auto">
                 <Toolbar />
                 {/* 組件庫與頁面結構：預覽模式下收起，只留上方工具列 */}
                 {!isPreviewMode && (
                     <>
-                        <ComponentPalette
-                            components={components}
-                            setDragStartTaget={setDragStartTaget}
-                            setDragEndTaget={setDragEndTaget}
-                        />
+                        <ComponentPalette components={components} />
                         <PageStructure />
                     </>
                 )}

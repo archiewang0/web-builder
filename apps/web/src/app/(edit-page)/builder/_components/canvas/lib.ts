@@ -113,18 +113,34 @@ export function computeReorder(
     return newElements;
 }
 
-// 依滑鼠 Y 座標相對於 target 元素的位置，決定要插在它前面／後面，還是（僅限
-// container）塞進它裡面。非 container target 沒有「裡面」，只分上下兩半。
+// 只取 top/height，不要求真的是 DOMRect——dnd-kit 的 over.rect 是它自己的
+// ClientRect 形狀（純資料物件，不是 DOM 量出來的 DOMRect 實例），形狀相容即可直接傳進來。
+interface RectLike {
+    top: number;
+    height: number;
+}
+
+// 上緣/下緣各留固定 2px 的判定帶，不管元素本身多高都一樣寬——比例式的邊界
+// （例如高度的 25%）在很高的元素上會變成一大塊區域，反而很難精準插在前面／後面。
+const EDGE_ZONE_PX = 2;
+
+// 依 Y 座標相對於 target 元素的位置，決定要插在它前面（同層、排在 target 之前）、
+// 後面（同層、排在 target 之後），還是（僅限 container）塞進它裡面。
+// 非 container target 沒有「裡面」，扣掉上下各 2px 的判定帶之後，剩下的中間區域
+// 依上下半分別歸向前面／後面。
 export function getDropPosition(
-    targetRect: DOMRect,
-    clientY: number,
+    targetRect: RectLike,
+    pointY: number,
     isContainer: boolean
 ): DropPosition {
-    const ratio = (clientY - targetRect.top) / targetRect.height;
-    if (!isContainer) return ratio < 0.5 ? 'before' : 'after';
-    if (ratio < 0.25) return 'before';
-    if (ratio > 0.75) return 'after';
-    return 'inside';
+    const offsetFromTop = pointY - targetRect.top;
+    const offsetFromBottom = targetRect.height - offsetFromTop;
+
+    if (offsetFromTop <= EDGE_ZONE_PX) return 'before';
+    if (offsetFromBottom <= EDGE_ZONE_PX) return 'after';
+    if (isContainer) return 'inside';
+
+    return offsetFromTop / targetRect.height < 0.5 ? 'before' : 'after';
 }
 
 // 依 componentId 建出新元素（pure factory，不依賴 React）
