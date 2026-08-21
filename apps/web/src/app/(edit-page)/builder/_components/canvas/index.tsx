@@ -49,7 +49,10 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
 
     return (
         <main
-            className="flex-1 w-full flex flex-col bg-gray-100 overflow-hidden"
+            className={classNames(
+                ' h-[calc(100vh-50px)]',
+                'flex-1 w-full flex flex-col bg-gray-100  '
+            )}
             onClick={(e) => {
                 e.stopPropagation();
                 setSelectedElement(null);

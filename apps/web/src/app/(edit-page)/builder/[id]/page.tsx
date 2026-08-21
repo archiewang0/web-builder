@@ -1,9 +1,10 @@
 'use client';
 import Link from 'next/link';
-import { DndContext, pointerWithin } from '@dnd-kit/core';
+import { DndContext, DragOverlay, pointerWithin } from '@dnd-kit/core';
 import { useSidebar } from '../_components/sidebar/use-sidebar';
 import { useHeaderStore } from '@/store/use-header-store';
 import { Sidebar } from '../_components/sidebar';
+import { PaletteItemPreview } from '../_components/sidebar/component-palette';
 import { Canvas } from '../_components/canvas';
 import { PropertySetting } from '../_components/property-setting';
 import { PreviewFloatingControls } from '../_components/preview-floating-controls';
@@ -20,8 +21,22 @@ export default function WebBuilderPage() {
     const { eventLog, logEvent, clearLog, copyAsJSON, copyAsTest } = useEventLogger();
     // 唯一的拖曳協調者：Sidebar（新元件來源）跟 Canvas（既有元素 reorder + drop 目標）
     // 都要在同一個 <DndContext> 底下才能互相拖放，所以掛在這裡，而不是 Canvas 內部。
-    const { sensors, handleDragStart, handleDragOver, handleDragEnd, activeId, overId, dropPosition } =
-        useCanvasDnd(logEvent);
+    const {
+        sensors,
+        handleDragStart,
+        handleDragOver,
+        handleDragEnd,
+        activeId,
+        overId,
+        dropPosition,
+        activeDragData,
+    } = useCanvasDnd(logEvent);
+
+    // sidebar 抓drag 的 component , 之後放入 dragoverlay
+    const activeDragComponent =
+        activeDragData?.type === 'new-component'
+            ? components.find((component) => component.id === activeDragData.componentId)
+            : undefined;
 
     if (status === 'loading') {
         return (
@@ -53,6 +68,8 @@ export default function WebBuilderPage() {
             // 永遠被外層的 Body 或旁邊的元素卡位。pointerWithin 改成單純看滑鼠座標點有沒有
             // 落在該 droppable 範圍內，跟拖曳元素的大小無關，巢狀小目標才能被準確選到。
             collisionDetection={pointerWithin}
+            // dnd 拖曳的時候會讓畫面,跟著拖曳目標跑, 所以下 threshold 就可以解決
+            autoScroll={{ threshold: { x: 0, y: 0.2 } }}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
@@ -73,6 +90,12 @@ export default function WebBuilderPage() {
                 {/* 預覽模式：sidebar 已整個不 render，改用浮動小工具負責返回編輯／儲存 */}
                 {isPreviewMode && <PreviewFloatingControls />}
             </div>
+
+            {/* portal 到 document.body，不受 sidebar/canvas 任何 overflow 或 z-index
+                影響，拖到哪都看得到——見 use-canvas-dnd.tsx 的 activeDragData 註解 */}
+            <DragOverlay dropAnimation={null}>
+                {activeDragComponent && <PaletteItemPreview component={activeDragComponent} />}
+            </DragOverlay>
 
             <EventLoggerPanel
                 eventLog={eventLog}

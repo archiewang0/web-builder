@@ -44,7 +44,9 @@ export function PageStructure() {
                 {/* Body：畫布的根節點，每份頁面固定只有一個，不能刪除也不能拖曳新增，只能調背景 */}
                 <div
                     className={`flex items-center space-x-1 p-1.5 rounded cursor-pointer transition-colors ${
-                        isBodySelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-700'
+                        isBodySelected
+                            ? 'bg-blue-50 text-blue-700'
+                            : 'hover:bg-gray-50 text-gray-700'
                     }`}
                     onClick={(e) => {
                         e.stopPropagation();
@@ -65,7 +67,9 @@ export function PageStructure() {
                             <ChevronRight className="w-3 h-3" />
                         )}
                     </button>
-                    <Monitor className={`w-4 h-4 ${isBodySelected ? 'text-blue-600' : 'text-gray-500'}`} />
+                    <Monitor
+                        className={`w-4 h-4 ${isBodySelected ? 'text-blue-600' : 'text-gray-500'}`}
+                    />
                     <span className="text-xs truncate">Body</span>
                 </div>
 

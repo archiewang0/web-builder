@@ -20,14 +20,14 @@ import type { LogEvent } from '../canvas/event-log/use-event-logger';
 // 不再需要原本那套「靠 DOM 事件冒泡 + stopPropagation + draggedIdRef 手動同步」的
 // 機制——dnd-kit 用 active/over 集中管理拖曳狀態，直接讀 active.data.current.type
 // 就能分辨這次拖曳是「sidebar 新元件」還是「既有元素」，不用再猜事件是被誰攔截的。
-interface NewComponentDragData {
+export interface NewComponentDragData {
     type: 'new-component';
     componentId: ComponentIdEnums;
 }
-interface ExistingElementDragData {
+export interface ExistingElementDragData {
     type: 'existing-element';
 }
-type ActiveDragData = NewComponentDragData | ExistingElementDragData;
+export type ActiveDragData = NewComponentDragData | ExistingElementDragData;
 
 interface DroppableData {
     componentId?: ComponentIdEnums;
@@ -40,18 +40,20 @@ export function useCanvasDnd(logEvent: LogEvent) {
     const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
 
     // 拖曳一小段距離才真的算「開始拖曳」，避免單純點擊（例如點文字進入編輯模式）被誤判成拖曳。
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
-    );
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
     const [activeId, setActiveId] = useState<string | null>(null);
     const [overId, setOverId] = useState<string | null>(null);
     const [dropPosition, setDropPosition] = useState<DropPosition | null>(null);
+    // DragOverlay 要渲染的預覽內容取決於這次拖曳的來源（sidebar 新元件 vs 既有元素），
+    // 存起來給 page.tsx 判斷要渲染哪種預覽，不用另外重新讀 event.active.data。
+    const [activeDragData, setActiveDragData] = useState<ActiveDragData | null>(null);
 
     function reset() {
         setActiveId(null);
         setOverId(null);
         setDropPosition(null);
+        setActiveDragData(null);
     }
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -60,6 +62,7 @@ export function useCanvasDnd(logEvent: LogEvent) {
 
         const id = String(event.active.id);
         setActiveId(id);
+        setActiveDragData(data);
 
         if (data.type === 'existing-element') {
             setSelectedElement(id);
@@ -101,7 +104,12 @@ export function useCanvasDnd(logEvent: LogEvent) {
 
         if (data?.type === 'new-component') {
             const overData = over?.data.current as DroppableData | undefined;
-            insertNewComponent(data.componentId, over ? String(over.id) : null, overData, dropPosition);
+            insertNewComponent(
+                data.componentId,
+                over ? String(over.id) : null,
+                overData,
+                dropPosition
+            );
             reset();
             return;
         }
@@ -137,7 +145,13 @@ export function useCanvasDnd(logEvent: LogEvent) {
             // 也讓使用者拖曳時目標不會一直跑掉。
             if (over.id !== active.id && dropPosition) {
                 const overIdStr = String(over.id);
-                const result = computeReorder(schema.elements, elementMap, draggedId, overIdStr, dropPosition);
+                const result = computeReorder(
+                    schema.elements,
+                    elementMap,
+                    draggedId,
+                    overIdStr,
+                    dropPosition
+                );
                 if (process.env.NODE_ENV === 'development') {
                     logEvent(draggedId, overIdStr, schema.elements, result, dropPosition);
                     console.log('🔵 [element drag] drop committed:', dropPosition);
@@ -221,5 +235,6 @@ export function useCanvasDnd(logEvent: LogEvent) {
         activeId,
         overId,
         dropPosition,
+        activeDragData,
     };
 }
