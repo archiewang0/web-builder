@@ -1,12 +1,12 @@
-import { ContainerElementSchema, ElementSchema } from "@/store/use-schema-store";
-import { ComponentIdEnums } from "../sidebar/use-sidebar";
+import { ContainerElementSchema, ElementSchema } from '@/store/use-schema-store';
+import { ComponentIdEnums } from '../sidebar/use-sidebar';
 
 // Map 索引節點
 export interface ElementMapNode {
     element: ElementSchema;
     parent: ContainerElementSchema | null;
     path: number[]; // 在樹中的位置路徑
-    depth: number;  // 深度（根層級 = 0）
+    depth: number; // 深度（根層級 = 0）
 }
 /*
 
@@ -77,8 +77,7 @@ export function computeReorder(
 
     // target 是 dragged 的子孫節點，無法移入自己內部
     const isDraggedAncestorOfTarget =
-        draggedPath.length < targetPath.length &&
-        draggedPath.every((v, i) => v === targetPath[i]);
+        draggedPath.length < targetPath.length && draggedPath.every((v, i) => v === targetPath[i]);
     if (isDraggedAncestorOfTarget) return elements;
 
     // Step 1: 移除 dragged element
@@ -100,7 +99,10 @@ export function computeReorder(
     // Step 3: 依 dropPosition 插入到目標位置。'inside' 只有 target 是 container
     // 才塞進它的 children；其餘情況（包含 target 不是 container 卻收到
     // 'inside' 的防呆）都當成插在 target 同層的前面／後面。
-    if (dropPosition === 'inside' && targetNode.element.componentId === ComponentIdEnums.container) {
+    if (
+        dropPosition === 'inside' &&
+        targetNode.element.componentId === ComponentIdEnums.container
+    ) {
         const container = getElementAtPath(newElements, targetPath) as ContainerElementSchema;
         container.children.push(draggedElement!);
     } else {
@@ -120,14 +122,16 @@ interface RectLike {
     height: number;
 }
 
-// 上緣/下緣各留固定 2px 的判定帶，不管元素本身多高都一樣寬——比例式的邊界
-// （例如高度的 25%）在很高的元素上會變成一大塊區域，反而很難精準插在前面／後面。
-const EDGE_ZONE_PX = 2;
+// 上下緣各留固定 EDGE_ZONE_PX 寬的判定帶，不隨 target 本身的大小縮放。
+// 不用「相對 target 高度的比例」（例如之前的 50% 對半分）——target 越大，
+// 比例算出來的 before/after 判定區就跟著等比放大，變成一大片模糊區域，滑鼠
+// 稍微移動就整片算同一邊，反而不精準；target 大到接近整個畫布時，甚至逼滑鼠
+// 要整個移出它的範圍才能插在旁邊，幾乎摸不到 before/after。
+// 改成固定像素：不管 target 多大，滑鼠只要落在上/下緣固定這麼寬的範圍內，
+// 就是 before/after，讓使用者用同樣精細度的滑鼠移動就能命中，不被 target
+// 大小牽著跑；扣掉這兩段固定帶之後剩下的中間區域，container 才算 inside。
+const EDGE_ZONE_PX = 16;
 
-// 依 Y 座標相對於 target 元素的位置，決定要插在它前面（同層、排在 target 之前）、
-// 後面（同層、排在 target 之後），還是（僅限 container）塞進它裡面。
-// 非 container target 沒有「裡面」，扣掉上下各 2px 的判定帶之後，剩下的中間區域
-// 依上下半分別歸向前面／後面。
 export function getDropPosition(
     targetRect: RectLike,
     pointY: number,
@@ -136,11 +140,23 @@ export function getDropPosition(
     const offsetFromTop = pointY - targetRect.top;
     const offsetFromBottom = targetRect.height - offsetFromTop;
 
-    if (offsetFromTop <= EDGE_ZONE_PX) return 'before';
-    if (offsetFromBottom <= EDGE_ZONE_PX) return 'after';
-    if (isContainer) return 'inside';
+    console.log('offsetFromTop: ', offsetFromTop);
+    console.log('offsetFromBottom: ', offsetFromBottom);
+    console.log('isContainer: ', isContainer);
 
-    return offsetFromTop / targetRect.height < 0.5 ? 'before' : 'after';
+    let result: DropPosition;
+    if (offsetFromTop < EDGE_ZONE_PX) {
+        result = 'before';
+    } else if (offsetFromBottom < EDGE_ZONE_PX) {
+        result = 'after';
+    } else if (isContainer) {
+        result = 'inside';
+    } else {
+        result = offsetFromTop < offsetFromBottom ? 'before' : 'after';
+    }
+
+    console.log('result: ', result);
+    return result;
 }
 
 // 依 componentId 建出新元素（pure factory，不依賴 React）
@@ -174,7 +190,6 @@ export function buildElementMap(
     elements: ElementSchema[],
     map: Map<string, ElementMapNode> = new Map()
 ): Map<string, ElementMapNode> {
-
     function traverse(
         elements: ElementSchema[],
         parent: ContainerElementSchema | null = null,
@@ -189,18 +204,13 @@ export function buildElementMap(
                 element: element,
                 parent: parent,
                 path: elementPath,
-                depth: depth
+                depth: depth,
             });
 
             // 如果是 Container，遞歸處理子元素
             if (element.componentId === ComponentIdEnums.container) {
                 const containerElement = element as ContainerElementSchema;
-                traverse(
-                    containerElement.children,
-                    containerElement,
-                    elementPath,
-                    depth + 1
-                );
+                traverse(containerElement.children, containerElement, elementPath, depth + 1);
             }
         });
     }

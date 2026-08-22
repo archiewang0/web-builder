@@ -76,8 +76,9 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                             ref={setBodyDropRef}
                             id="canvas"
                             className={classNames(
-                                'z-0',
-                                'p-4 py-10 gap-10 flex flex-col relative rounded-lg min-h-[600px]',
+                                !isPreviewMode && 'z-0',
+                                !isPreviewMode &&
+                                    'p-4 py-10 gap-10 flex flex-col relative rounded-lg min-h-[600px]',
                                 !isPreviewMode && 'border-2 border-dashed border-gray-300'
                             )}
                             style={schema.body?.styles as React.CSSProperties}

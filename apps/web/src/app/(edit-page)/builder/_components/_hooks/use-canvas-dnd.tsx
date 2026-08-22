@@ -1,6 +1,12 @@
-import { useState } from 'react';
-import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
+import { useRef, useState } from 'react';
+import { PointerSensor, useSensor, useSensors, pointerWithin } from '@dnd-kit/core';
+import type {
+    CollisionDetection,
+    DragEndEvent,
+    DragMoveEvent,
+    DragOverEvent,
+    DragStartEvent,
+} from '@dnd-kit/core';
 import {
     useSchemaStore,
     ElementSchema,
@@ -11,6 +17,62 @@ import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
 import { computeReorder, createElement, getDropPosition, type DropPosition } from '../canvas/lib';
 import type { LogEvent } from '../canvas/event-log/use-event-logger';
+
+// 滑鼠壓在某個元素上時直接用 pointerWithin（維持巢狀小目標優先命中的判斷，
+// 進一步要不要算 before/after/inside 交給 canvas/lib.ts 的 getDropPosition：
+// 滑鼠只要真的落在該元素範圍內，container 一律是 inside）；
+// 但如果這次只命中最外層的 Body（代表落在元素之間的間隙裡，還沒進到任何元素
+// 範圍內），改成找「離滑鼠最近的元素」，只要距離在 CANVAS_PROXIMITY_PX 以內
+// 就當作命中它——不用整段路徑都要精準貼邊才能安插，也不會像 dnd-kit 內建的
+// closestCenter 一樣「不管多遠都硬 snap」。
+const CANVAS_PROXIMITY_PX = 50;
+
+function distanceToRect(
+    point: { x: number; y: number },
+    rect: { top: number; left: number; width: number; height: number }
+) {
+    const dx = Math.max(rect.left - point.x, 0, point.x - (rect.left + rect.width));
+    const dy = Math.max(rect.top - point.y, 0, point.y - (rect.top + rect.height));
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+// 從 dragstart/dragover 的原生事件裡拿滑鼠（或觸控點）的 clientY——只有
+// PointerSensor 會用到，理論上一定是 PointerEvent，但保守處理 MouseEvent/
+// TouchEvent 避免以後換 sensor 就整個壞掉。
+function getClientY(event: Event): number | null {
+    if (event instanceof PointerEvent || event instanceof MouseEvent) return event.clientY;
+    if (event instanceof TouchEvent) return event.touches[0]?.clientY ?? null;
+    return null;
+}
+
+export const pointerWithinOrNearest: CollisionDetection = (args) => {
+    const hits = pointerWithin(args);
+    const onlyHitBody =
+        hits.length > 0 && hits.every((collision) => collision.id === BODY_ELEMENT_ID);
+    if (hits.length > 0 && !onlyHitBody) return hits;
+
+    const { pointerCoordinates, droppableContainers, droppableRects } = args;
+    if (!pointerCoordinates) return hits;
+
+    let nearestId: string | null = null;
+    let nearestDistance = Infinity;
+    for (const container of droppableContainers) {
+        if (container.id === BODY_ELEMENT_ID) continue;
+        const rect = droppableRects.get(container.id);
+        if (!rect) continue;
+        const distance = distanceToRect(pointerCoordinates, rect);
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestId = String(container.id);
+        }
+    }
+
+    if (nearestId && nearestDistance <= CANVAS_PROXIMITY_PX) {
+        return [{ id: nearestId }];
+    }
+
+    return hits;
+};
 
 // 這支 hook 是唯一的 DnD 協調者，取代原本分開的 useCanvasDrop（sidebar 拖新元件、
 // 既有元素拖到 Body）跟 useElementDrag（既有元素拖到別的元素上 reorder）。
@@ -48,12 +110,25 @@ export function useCanvasDnd(logEvent: LogEvent) {
     // DragOverlay 要渲染的預覽內容取決於這次拖曳的來源（sidebar 新元件 vs 既有元素），
     // 存起來給 page.tsx 判斷要渲染哪種預覽，不用另外重新讀 event.active.data。
     const [activeDragData, setActiveDragData] = useState<ActiveDragData | null>(null);
+    // dragstart 當下滑鼠的 clientY，dragover 時加回 event.delta.y（累積位移）
+    // 就能還原「滑鼠現在的即時 Y 座標」，取代原本用「被拖曳元素的 rect 中心」
+    // 判斷 before/after/inside 的做法——空容器只剩 padding 撐出的高度可能比
+    // 被拖曳的元素矮很多，用元素中心點永遠算不到 inside。
+    const pointerStartYRef = useRef<number | null>(null);
+    // dropPosition 的計算節流：dnd-kit 的 onDragMove 每次滑鼠移動都會觸發，
+    // 拖曳中不需要每個 frame 都重算一次 getDropPosition，300ms 算一次就夠讓
+    // 使用者感覺得到即時反應，同時省掉大量重複計算。0 代表「還沒算過」，
+    // 讓拖曳一開始（或剛換到新目標）的第一次移動一定會立刻算一次，不用等滿 300ms。
+    const DROP_POSITION_THROTTLE_MS = 300;
+    const lastDropPositionComputeAtRef = useRef<number>(0);
 
     function reset() {
         setActiveId(null);
         setOverId(null);
         setDropPosition(null);
         setActiveDragData(null);
+        pointerStartYRef.current = null;
+        lastDropPositionComputeAtRef.current = 0;
     }
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -63,6 +138,7 @@ export function useCanvasDnd(logEvent: LogEvent) {
         const id = String(event.active.id);
         setActiveId(id);
         setActiveDragData(data);
+        pointerStartYRef.current = getClientY(event.activatorEvent);
 
         if (data.type === 'existing-element') {
             setSelectedElement(id);
@@ -73,6 +149,10 @@ export function useCanvasDnd(logEvent: LogEvent) {
         }
     };
 
+    // dnd-kit 的 onDragOver 內部是包在 `useEffect(..., [overId])` 裡——只有「這次
+    // 壓到的目標換人」（overId 改變）才會重新觸發，滑鼠在同一個 target 內部繼續
+    // 移動（例如從上緣移到中間）不會重跑。這裡只用它做 overId 的設定/清空，
+    // 真正的 before/after/inside 計算搬去 handleDragMove（見下）。
     const handleDragOver = (event: DragOverEvent) => {
         const { active, over } = event;
         if (!over || over.id === active.id) {
@@ -83,18 +163,40 @@ export function useCanvasDnd(logEvent: LogEvent) {
 
         const overIdStr = String(over.id);
         setOverId((prev) => (prev === overIdStr ? prev : overIdStr));
+    };
+
+    // onDragMove 綁的是 dnd-kit 內部的 `useEffect(..., [scrollAdjustedTranslate])`，
+    // 滑鼠只要一移動就會觸發，不管有沒有換目標——用它才能在同一個 target 內部
+    // 移動時持續重算 dropPosition。但不需要每個 frame 都算一次，節流到 300ms
+    // 一次：拖曳中使用者感覺不出差異，同時省掉大量重複計算。
+    const handleDragMove = (event: DragMoveEvent) => {
+        const { active, over, delta } = event;
+        if (!over || over.id === active.id) return;
+
+        const now = Date.now();
+        if (now - lastDropPositionComputeAtRef.current < DROP_POSITION_THROTTLE_MS) return;
+        lastDropPositionComputeAtRef.current = now;
 
         // sidebar 拖新元件跟既有元素 reorder 共用同一套插入位置判斷（before/after/
         // inside），才能在拖新元件時也看到插入線／容器高亮，不然使用者完全看不出
         // 「放手後會插在哪裡」。
         const overRect = over.rect;
-        const activeRect = active.rect.current.translated ?? active.rect.current.initial;
-        if (!overRect || !activeRect) return;
+        if (!overRect) return;
+
+        // 用滑鼠實際的即時 Y 座標判斷，不要用「被拖曳元素本身的 rect 中心」——
+        // 空容器可能矮到只剩 padding（例如 44px），被拖曳的元素只要比它高，
+        // 元素中心點永遠不會落在容器範圍內，會一直誤判成 before/after，
+        // 導致完全塞不進空容器。拿不到即時滑鼠座標（理論上不會發生）才退回
+        // 用被拖曳元素的 rect 中心當備援。
+        const pointerY =
+            pointerStartYRef.current !== null
+                ? pointerStartYRef.current + delta.y
+                : (active.rect.current.translated ?? active.rect.current.initial)?.top;
+        if (pointerY === undefined) return;
 
         const overData = over.data.current as DroppableData | undefined;
         const isContainer = overData?.componentId === ComponentIdEnums.container;
-        const activeCenterY = activeRect.top + activeRect.height / 2;
-        const position = getDropPosition(overRect, activeCenterY, isContainer);
+        const position = getDropPosition(overRect, pointerY, isContainer);
         setDropPosition((prev) => (prev === position ? prev : position));
     };
 
@@ -231,6 +333,7 @@ export function useCanvasDnd(logEvent: LogEvent) {
         sensors,
         handleDragStart,
         handleDragOver,
+        handleDragMove,
         handleDragEnd,
         activeId,
         overId,

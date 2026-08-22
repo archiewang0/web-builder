@@ -35,10 +35,11 @@ export function ContainerElement({
             {...elementProperty}
             className={classNames(
                 'relative w-full pointer-events-auto rounded-lg transition-all',
-                !isPreviewMode && 'p-5 border-2 border-dashed hover:shadow-md cursor-pointer',
+                !isPreviewMode && ' p-3 border-2 border-dashed hover:shadow-md cursor-pointer',
                 isFlexMode && 'flex flex-wrap gap-2',
                 !isFlexMode && columns > 1 && `grid gap-2 ${GRID_COLS[columns] ?? 'grid-cols-2'}`,
-                !isPreviewMode && (elementProperty['selected-style'] || 'border-gray-200')
+                !isPreviewMode && (elementProperty['selected-style'] || 'border-gray-200'),
+                !isPreviewMode && childrenElements?.length === 0 && 'h-16'
             )}
         >
             {!isPreviewMode && (

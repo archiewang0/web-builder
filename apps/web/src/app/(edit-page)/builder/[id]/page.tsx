@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { DndContext, DragOverlay, pointerWithin } from '@dnd-kit/core';
+import { DndContext, DragOverlay } from '@dnd-kit/core';
 import { useSidebar } from '../_components/sidebar/use-sidebar';
 import { useHeaderStore } from '@/store/use-header-store';
 import { Sidebar } from '../_components/sidebar';
@@ -9,7 +9,7 @@ import { Canvas } from '../_components/canvas';
 import { PropertySetting } from '../_components/property-setting';
 import { PreviewFloatingControls } from '../_components/preview-floating-controls';
 import { usePageLoader } from './use-page-loader';
-import { useCanvasDnd } from '../_components/_hooks/use-canvas-dnd';
+import { useCanvasDnd, pointerWithinOrNearest } from '../_components/_hooks/use-canvas-dnd';
 import { useEventLogger } from '../_components/canvas/event-log/use-event-logger';
 import { EventLoggerPanel } from '../_components/canvas/event-log/event-logger-panel';
 
@@ -25,6 +25,7 @@ export default function WebBuilderPage() {
         sensors,
         handleDragStart,
         handleDragOver,
+        handleDragMove,
         handleDragEnd,
         activeId,
         overId,
@@ -67,11 +68,15 @@ export default function WebBuilderPage() {
             // 只有 padding、沒有內容撐高度，面積很小）比例會被拉低，導致空容器幾乎選不到，
             // 永遠被外層的 Body 或旁邊的元素卡位。pointerWithin 改成單純看滑鼠座標點有沒有
             // 落在該 droppable 範圍內，跟拖曳元素的大小無關，巢狀小目標才能被準確選到。
-            collisionDetection={pointerWithin}
+            // pointerWithinOrNearest 在此基礎上再加一層：如果滑鼠只落在最外層 Body
+            // （代表落在元素間的間隙、還沒貼到邊緣判定帶），改抓 50px 內最近的元素，
+            // 避免使用者一定要精準貼邊才能安插，拖到間隙就整個回彈。
+            collisionDetection={pointerWithinOrNearest}
             // dnd 拖曳的時候會讓畫面,跟著拖曳目標跑, 所以下 threshold 就可以解決
             autoScroll={{ threshold: { x: 0, y: 0.2 } }}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
+            onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
         >
             <div className="flex-1 flex ">

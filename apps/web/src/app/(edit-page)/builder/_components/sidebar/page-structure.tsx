@@ -70,7 +70,7 @@ export function PageStructure() {
                     <Monitor
                         className={`w-4 h-4 ${isBodySelected ? 'text-blue-600' : 'text-gray-500'}`}
                     />
-                    <span className="text-xs truncate">Body</span>
+                    <span className="text-xs truncate">畫布</span>
                 </div>
 
                 {isBodyExpanded &&
