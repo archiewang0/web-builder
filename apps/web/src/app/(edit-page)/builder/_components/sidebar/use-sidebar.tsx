@@ -1,13 +1,21 @@
-import { Image, Layout, Square, Type } from 'lucide-react';
+import { Image, Layout, PanelTop, Square, Type } from 'lucide-react';
 import { ComponentIdEnums } from '../_types/component-id-enums';
+import { PresetIdEnums } from '../_types/preset-id-enums';
 
-export { ComponentIdEnums };
+export { ComponentIdEnums, PresetIdEnums };
 
+// 樣板（PresetIdEnums）跟一般組件（ComponentIdEnums）在 sidebar 上長得一樣、
+// 共用同一份 Component 清單跟同一顆 PaletteItem，只有拖曳時要組出什麼東西不同
+// （見 component-palette.tsx／use-canvas-dnd.tsx），所以 id 型別在這裡先聯集起來。
 export interface Component {
-    id: ComponentIdEnums;
+    id: ComponentIdEnums | PresetIdEnums;
     name: string;
     icon: React.ComponentType<{ className?: string }>;
     category: string;
+}
+
+export function isPresetId(id: Component['id']): id is PresetIdEnums {
+    return Object.values(PresetIdEnums).includes(id as PresetIdEnums);
 }
 
 export function useSidebar() {
@@ -16,6 +24,7 @@ export function useSidebar() {
         { id: ComponentIdEnums.image, name: '圖片', icon: Image, category: '基礎' },
         { id: ComponentIdEnums.button, name: '按鈕', icon: Square, category: '基礎' },
         { id: ComponentIdEnums.container, name: '容器', icon: Layout, category: '佈局' },
+        { id: PresetIdEnums.navbar, name: '導覽列', icon: PanelTop, category: '版面樣板' },
     ];
 
     return { components };

@@ -37,10 +37,16 @@ function RenderSchemaElement({ element }: { element: ElementSchema }) {
             );
 
         case ComponentIdEnums.image:
+            // 沒設圖片時不能整個回傳 null——這個節點還是佔著版面上的一格
+            // （grid 欄位、flex 排版旁邊的元素），直接消失會讓旁邊的元素跟著
+            // 移位、grid 欄數對不起來。至少渲染一個套用相同 styles（含寬高）
+            // 的空 div 撐住版面，只是沒有圖可以顯示而已。
             return element.content ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img id={element.id} src={element.content} alt="" style={style} className="rounded" />
-            ) : null;
+            ) : (
+                <div id={element.id} style={style} className="rounded" />
+            );
 
         case ComponentIdEnums.button: {
             const buttonClassName = 'shadow-md transition-all hover:opacity-80 rounded px-4 py-2';

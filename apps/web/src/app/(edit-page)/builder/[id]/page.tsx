@@ -33,11 +33,14 @@ export default function WebBuilderPage() {
         activeDragData,
     } = useCanvasDnd(logEvent);
 
-    // sidebar 抓drag 的 component , 之後放入 dragoverlay
+    // sidebar 抓drag 的 component（一般組件或樣板都一樣，只是 id 來源欄位不同），
+    // 之後放入 dragoverlay
     const activeDragComponent =
         activeDragData?.type === 'new-component'
             ? components.find((component) => component.id === activeDragData.componentId)
-            : undefined;
+            : activeDragData?.type === 'new-preset'
+              ? components.find((component) => component.id === activeDragData.presetId)
+              : undefined;
 
     if (status === 'loading') {
         return (

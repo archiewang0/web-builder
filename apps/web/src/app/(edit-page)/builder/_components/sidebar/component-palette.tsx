@@ -1,7 +1,7 @@
 'use client';
 
 import { useDraggable } from '@dnd-kit/core';
-import { Component } from './use-sidebar';
+import { Component, isPresetId } from './use-sidebar';
 
 interface ComponentPaletteProps {
     components: Component[];
@@ -37,9 +37,15 @@ function PaletteItemContent({ component }: { component: Component }) {
 
 // sidebar 組件庫的地方, 這裡有用 useDraggable 用來處理拖曳的部分
 function PaletteItem({ component }: { component: Component }) {
+    // 樣板跟一般組件視覺上完全一樣，差別只在放開滑鼠後 use-canvas-dnd.tsx
+    // 要組出單一元素還是一整棵樣板樹——這裡決定要標成哪一種 drag data。
+    const dragData = isPresetId(component.id)
+        ? ({ type: 'new-preset' as const, presetId: component.id } as const)
+        : ({ type: 'new-component' as const, componentId: component.id } as const);
+
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: `palette:${component.id}`,
-        data: { type: 'new-component' as const, componentId: component.id },
+        data: dragData,
     });
 
     return (

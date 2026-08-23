@@ -59,17 +59,27 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
             }}
         >
             <div className="flex w-full h-full flex-col">
-                <div
-                    className={classNames(
-                        'flex-1 overflow-y-auto flex items-start justify-center',
-                        !isPreviewMode && 'p-6'
-                    )}
-                >
+                {/* 這層只負責 padding（視覺留白）跟水平置中，本身不能捲動、不能是
+                    fixed 的 containing block——如果讓這層（滿版寬）負責捲動/transform，
+                    裝置外框在非桌面寬度時是用 justify-content: center 置中在裡面的，
+                    跟這層自己的左邊界不是同一個位置，fixed 元素的 left:0 會對齊到
+                    這層的左邊界，比置中後的裝置外框更靠左，兩者就對不齊。 */}
+                <div className={classNames('flex-1 overflow-y-auto', !isPreviewMode && 'p-6')}>
                     <div
-                        className="bg-white shadow-xl rounded-lg transition-all duration-300 overflow-hidden"
+                        className="h-full bg-white shadow-xl rounded-lg transition-all duration-300 "
                         style={{
                             width: DEVICES.find((d) => d.id === activeDevice)?.width,
                             maxWidth: '100%',
+                            // transform: translateZ(0) 是刻意留著的 CSS trick，不要當成沒用的
+                            // 殘留程式碼刪掉：只要祖先有 transform，position: fixed 的子孫
+                            // 元素就會改成相對這個祖先定位／裁切，而不是相對整個瀏覽器
+                            // viewport。這層 div 本身就是「裝置外框」——同時也是畫布實際
+                            // 在捲動的容器——三件事（寬度限制／捲動／containing block）
+                            // 疊在同一層，fixed 子孫元素的 width/left 才會跟裝置外框
+                            // 完全對齊，不會因為置中而偏移。公開頁
+                            // （site/[id]/render-schema.tsx）沒有套這個，fixed 在那邊維持
+                            // 正常相對整個瀏覽器 viewport 定位，行為才是對訪客正確的。
+                            transform: 'translateZ(0)',
                         }}
                     >
                         <div
@@ -77,8 +87,15 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                             id="canvas"
                             className={classNames(
                                 !isPreviewMode && 'z-0',
+                                // 不能加 padding——Body 自己是 fixed navbar 的祖先，只要
+                                // Body 跟裝置外框（containing block）之間有任何 padding，
+                                // position: fixed 的子孫就會直接無視它、緊貼裝置外框對齊，
+                                // 但一般排版內容還是會被這個 padding 往內推，兩邊就對不齊
+                                // （見這次修的 bug）。preview 模式跟正式站台
+                                // （site/[id]/render-schema.tsx）本來就沒有這個 padding，
+                                // 這裡拿掉才能讓編輯模式的排版基準跟正式站台一致。
                                 !isPreviewMode &&
-                                    'p-4 py-10 gap-10 flex flex-col relative rounded-lg min-h-[600px]',
+                                    'gap-10 flex flex-col relative rounded-lg min-h-[600px]',
                                 !isPreviewMode && 'border-2 border-dashed border-gray-300'
                             )}
                             style={schema.body?.styles as React.CSSProperties}

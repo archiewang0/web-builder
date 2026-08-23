@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { ComponentIdEnums } from '@/app/(edit-page)/builder/_components/sidebar/use-sidebar';
 import { buildElementMap, ElementMapNode } from '@/app/(edit-page)/builder/_components/canvas/lib';
+import { PresetIdEnums } from '@/app/(edit-page)/builder/_components/_types/preset-id-enums';
 
 // 選取狀態用這個值代表選到的是 Body（畫布背景），不是 elements 陣列裡的某個節點。
 // 用固定字串而不是擴充 selectedElement 的型別，是因為真正的元素 id 都是 uuid，不會跟它撞到。
@@ -50,6 +51,11 @@ export interface ContainerElementSchema extends BaseElementSchema {
     // undefined = flex 版面（由 justifyContent 控制對齊）；number = grid 版面（欄數），兩者互斥
     columns?: number;
     children: ElementSchema[];
+    // 標記這個 container 是從哪個樣板展開來的（目前只有 navbar）。純粹是 UI 開關用的
+    // 標籤，不影響渲染——child 結構仍然是普通 container/image/button，使用者可以
+    // 隨意增刪調整；只有屬性面板會依這個欄位決定要不要多顯示樣板專屬的控制項
+    // （例如 navbar 專屬的導覽列定位），不會出現在一般手動疊出來的 container 上。
+    variant?: PresetIdEnums;
 }
 
 // 聯合類型：元素可以是 Leaf 或 Container

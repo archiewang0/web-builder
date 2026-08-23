@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import { useResizablePanel } from '@/lib/use-resizable-panel';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
+import { PresetIdEnums } from '../_types/preset-id-enums';
 import { SelectedNone } from './selected-none';
 import { EditSchemaConstructor } from './edit-schema';
 import { ContentTextarea } from './content-textarea';
@@ -14,6 +15,7 @@ import { LayoutSetting } from './layout-setting';
 import { BackgroundSetting } from './background-setting';
 import { ImageSetting } from './image-setting';
 import { ButtonLinkSetting } from './button-link-setting';
+import { NavbarPositionSetting } from './navbar-position-setting';
 import { usePropertySetting } from './use-property-setting';
 
 export type { StyleChangeHandler };
@@ -147,6 +149,14 @@ export function PropertySetting() {
                                             onJustifyContentChange={handleFlexAlignChange}
                                         />
                                     )}
+                                    {elementType === ComponentIdEnums.container &&
+                                        'variant' in element &&
+                                        element.variant === PresetIdEnums.navbar && (
+                                            <NavbarPositionSetting
+                                                position={localStyles.position}
+                                                onChange={handleStyleChange}
+                                            />
+                                        )}
                                     <BorderInputs
                                         borderWidth={localStyles.borderWidth}
                                         borderRadius={localStyles.borderRadius}

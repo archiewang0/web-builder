@@ -15,7 +15,14 @@ import {
 } from '@/store/use-schema-store';
 import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
-import { computeReorder, createElement, getDropPosition, type DropPosition } from '../canvas/lib';
+import { PresetIdEnums } from '../_types/preset-id-enums';
+import {
+    computeReorder,
+    createElement,
+    createPreset,
+    getDropPosition,
+    type DropPosition,
+} from '../canvas/lib';
 import type { LogEvent } from '../canvas/event-log/use-event-logger';
 
 // 滑鼠壓在某個元素上時直接用 pointerWithin（維持巢狀小目標優先命中的判斷，
@@ -86,10 +93,17 @@ export interface NewComponentDragData {
     type: 'new-component';
     componentId: ComponentIdEnums;
 }
+// 樣板（例如 navbar）拖到畫布上，放手後展開成一整棵既有組件組成的樹，
+// 跟 NewComponentDragData 分開是因為放手時要呼叫的 factory 不一樣
+// （createElement vs createPreset），其餘插入位置判斷邏輯完全共用。
+export interface NewPresetDragData {
+    type: 'new-preset';
+    presetId: PresetIdEnums;
+}
 export interface ExistingElementDragData {
     type: 'existing-element';
 }
-export type ActiveDragData = NewComponentDragData | ExistingElementDragData;
+export type ActiveDragData = NewComponentDragData | NewPresetDragData | ExistingElementDragData;
 
 interface DroppableData {
     componentId?: ComponentIdEnums;
@@ -155,6 +169,17 @@ export function useCanvasDnd(logEvent: LogEvent) {
     // 真正的 before/after/inside 計算搬去 handleDragMove（見下）。
     const handleDragOver = (event: DragOverEvent) => {
         const { active, over } = event;
+        const activeData = active.data.current as ActiveDragData | undefined;
+
+        // 樣板（目前只有 navbar）不管拖去哪裡，放手後一律強制回到 Body 最上層
+        // （見 handleDragEnd），不會真的插進滑鼠正壓著的那個 target——顯示
+        // insert 插入線／容器高亮反而是在騙使用者，乾脆不顯示任何 over 狀態。
+        if (activeData?.type === 'new-preset') {
+            setOverId(null);
+            setDropPosition(null);
+            return;
+        }
+
         if (!over || over.id === active.id) {
             setOverId(null);
             setDropPosition(null);
@@ -171,6 +196,10 @@ export function useCanvasDnd(logEvent: LogEvent) {
     // 一次：拖曳中使用者感覺不出差異，同時省掉大量重複計算。
     const handleDragMove = (event: DragMoveEvent) => {
         const { active, over, delta } = event;
+        const activeData = active.data.current as ActiveDragData | undefined;
+        // 樣板一律強制回到 Body 最上層（見 handleDragEnd），不需要算 before/after/
+        // inside——理由同 handleDragOver。
+        if (activeData?.type === 'new-preset') return;
         if (!over || over.id === active.id) return;
 
         const now = Date.now();
@@ -204,14 +233,35 @@ export function useCanvasDnd(logEvent: LogEvent) {
         const { active, over } = event;
         const data = active.data.current as ActiveDragData | undefined;
 
+        // 樣板（目前只有 navbar）完全不管 over/dropPosition 是什麼——不管拖去哪裡、
+        // 就算放到某個既有 container 上面，一律強制插進 Body 最上層（陣列最前面）。
+        // sticky/fixed 定位需要它是頁面最外層的第一個元素才能穩定運作（見
+        // createNavbarPreset 的註解），不接受被塞進任何 container 裡面。
+        if (data?.type === 'new-preset') {
+            // 一個頁面只允許存在一個 navbar——重複拖拉不會疊出第二個把原本已經
+            // 客製化過的內容擠到後面（視覺上就像被蓋掉一樣），已經有的話直接選取
+            // 它，讓使用者知道要調整的是這一個，而不是又生一個帶預設值的新的。
+            const existingNavbar = Array.from(elementMap.values()).find(
+                (node) =>
+                    node.element.componentId === ComponentIdEnums.container &&
+                    node.element.variant === data.presetId
+            )?.element;
+            if (existingNavbar) {
+                setSelectedElement(existingNavbar.id);
+                reset();
+                return;
+            }
+
+            const newElement = createPreset(data.presetId, 0);
+            setSchema((prev) => ({ ...prev, elements: [newElement, ...prev.elements] }));
+            reset();
+            return;
+        }
+
         if (data?.type === 'new-component') {
             const overData = over?.data.current as DroppableData | undefined;
-            insertNewComponent(
-                data.componentId,
-                over ? String(over.id) : null,
-                overData,
-                dropPosition
-            );
+            const newElement = createElement(data.componentId, { x: 0, y: 0 }, schema.elements.length);
+            insertElement(newElement, over ? String(over.id) : null, overData, dropPosition);
             reset();
             return;
         }
@@ -267,15 +317,14 @@ export function useCanvasDnd(logEvent: LogEvent) {
     // 跟既有元素 reorder 共用同一套 dropPosition 規則：'inside' 且 target 是 container
     // 才塞進 children；其餘（'before'/'after'，或 target 不是 container）都是插在
     // target 同層的前面／後面。沒有 dropPosition（理論上不會發生，防呆用）就跟舊版一樣
-    // 預設插在後面。
-    function insertNewComponent(
-        componentId: ComponentIdEnums,
+    // 預設插在後面。newElement 已經是組好的完整節點（單一組件或整棵樣板樹都一樣，
+    // 這裡只負責決定插在哪裡，不管它長什麼樣子）。
+    function insertElement(
+        newElement: ElementSchema,
         overElementId: string | null,
         overData: DroppableData | undefined,
         dropPosition: DropPosition | null
     ) {
-        const newElement = createElement(componentId, { x: 0, y: 0 }, schema.elements.length);
-
         if (!overElementId || overElementId === BODY_ELEMENT_ID) {
             setSchema((prev) => ({ ...prev, elements: [...prev.elements, newElement] }));
             return;
