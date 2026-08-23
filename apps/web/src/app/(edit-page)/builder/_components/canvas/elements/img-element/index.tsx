@@ -4,6 +4,12 @@ import { useCallback } from 'react';
 import classNames from 'classnames';
 import { Image as ImageIcon } from 'lucide-react';
 import { useImageResize } from './use-image-resize';
+import {
+    PLACEHOLDER_IMG_WIDTH_PX,
+    PLACEHOLDER_IMG_HEIGHT_PX,
+    PLACEHOLDER_IMG_MAX_WIDTH_PERCENT,
+    PLACEHOLDER_IMG_MIN_WIDTH_PERCENT,
+} from '@/app/(edit-page)/builder/_components/_const/img';
 
 interface ImgElementProps {
     id: string;
@@ -18,9 +24,6 @@ interface ImgElementProps {
 
 const handleClassName =
     'absolute top-1/2 -translate-y-1/2 w-2 h-10 rounded-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-ew-resize';
-
-const PLACEHOLDER_WIDTH = 300;
-const PLACEHOLDER_HEIGHT = 200;
 
 export function ImgElement({
     id,
@@ -51,6 +54,14 @@ export function ImgElement({
         [dndRef, wrapperRef]
     );
     const hasImage = Boolean(content);
+    // 沒設圖片時的佔位框，寬度也要跟著拖曳把手／屬性面板的百分比走，不能寫死
+    // 100%——不然使用者在還沒上傳圖片前调整寬度，畫面完全沒反應，會以為调整
+    // 失敗。用獨立的 PLACEHOLDER_IMG_MIN/MAX_WIDTH_PERCENT 夾住，避免 schema
+    // 裡存了超出範圍的髒值時佔位框跑版。
+    const clampedPlaceholderPercent = Math.min(
+        PLACEHOLDER_IMG_MAX_WIDTH_PERCENT,
+        Math.max(PLACEHOLDER_IMG_MIN_WIDTH_PERCENT, displayPercent)
+    );
 
     return (
         <div
@@ -58,22 +69,18 @@ export function ImgElement({
             {...restProperty}
             onDragStart={handleDragStart}
             style={
-                hasImage
-                    ? isPxMode
-                        ? {
-                              ...style,
-                              width: widthPx ?? PLACEHOLDER_WIDTH,
-                              height: heightPx ?? PLACEHOLDER_HEIGHT,
-                          }
-                        : {
-                              ...style,
-                              width: `${displayPercent}%`,
-                          }
+                isPxMode
+                    ? {
+                          ...style,
+                          width: widthPx ?? PLACEHOLDER_IMG_WIDTH_PX,
+                          height: heightPx ?? PLACEHOLDER_IMG_HEIGHT_PX,
+                      }
                     : {
                           ...style,
-                          width: '100%',
-                          maxWidth: PLACEHOLDER_WIDTH,
-                          aspectRatio: `${PLACEHOLDER_WIDTH} / ${PLACEHOLDER_HEIGHT}`,
+                          width: `${hasImage ? displayPercent : clampedPlaceholderPercent}%`,
+                          ...(!hasImage && {
+                              aspectRatio: `${PLACEHOLDER_IMG_WIDTH_PX} / ${PLACEHOLDER_IMG_HEIGHT_PX}`,
+                          }),
                       }
             }
             className={classNames(

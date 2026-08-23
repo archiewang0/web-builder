@@ -1,5 +1,6 @@
 import { ContainerElementSchema, ElementSchema } from '@/store/use-schema-store';
 import { ComponentIdEnums } from '../sidebar/use-sidebar';
+import { IMG_DEFAULT_WIDTH_PX, IMG_DEFAULT_HEIGHT_PX } from '../_const/img';
 
 // Map 索引節點
 export interface ElementMapNode {
@@ -173,6 +174,14 @@ export function createElement(
         [ComponentIdEnums.text]: '新增文字',
         [ComponentIdEnums.button]: '按鈕',
     };
+    // 圖片元件預設用 px 單位，不是 %——unit 是從 styles.width 字串後綴判斷的
+    // （見 image-size-setting.tsx），一開始就存 px 字串，新增的圖片元件才會
+    // 直接進 px 模式，不用使用者自己手動切換。
+    const styles =
+        componentId === ComponentIdEnums.image
+            ? { width: `${IMG_DEFAULT_WIDTH_PX}px`, height: `${IMG_DEFAULT_HEIGHT_PX}px` }
+            : undefined;
+
     return {
         id,
         componentId: componentId as
@@ -182,6 +191,7 @@ export function createElement(
         order,
         position,
         content: contentMap[componentId] ?? '',
+        styles,
     };
 }
 

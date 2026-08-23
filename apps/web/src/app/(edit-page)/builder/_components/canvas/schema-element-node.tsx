@@ -139,6 +139,8 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
                     id={data.id}
                     elementProperty={elementProperty}
                     content={data.content}
+                    href={data.href}
+                    isPreviewMode={isPreviewMode}
                 />
             );
 

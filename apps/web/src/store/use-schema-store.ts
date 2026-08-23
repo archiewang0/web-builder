@@ -38,6 +38,10 @@ interface BaseElementSchema {
 export interface LeafElementSchema extends BaseElementSchema {
     componentId: ComponentIdEnums.text | ComponentIdEnums.image | ComponentIdEnums.button;
     content?: string;
+    // 目前只有 button 會用到。單一欄位同時表達兩種連結模式，用值本身的格式分流，
+    // 不用另外存一個 linkType 欄位：'#' 開頭 = 捲動到 id 等於後面那段字串的元素，
+    // 其餘視為外部網址——跟 image-size-setting.tsx 用 width 字串後綴判斷 px/% 是同一種做法。
+    href?: string;
 }
 
 // Container 元素（可包含子元素）

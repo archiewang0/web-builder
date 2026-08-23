@@ -13,6 +13,7 @@ import { FontSetting } from './font-setting';
 import { LayoutSetting } from './layout-setting';
 import { BackgroundSetting } from './background-setting';
 import { ImageSetting } from './image-setting';
+import { ButtonLinkSetting } from './button-link-setting';
 import { usePropertySetting } from './use-property-setting';
 
 export type { StyleChangeHandler };
@@ -25,10 +26,12 @@ export function PropertySetting() {
         containerColumns,
         localContent,
         localStyles,
+        localHref,
         handleDelete,
         handleContentChange,
         handleContentValueChange,
         handleStyleChange,
+        handleHrefChange,
         handleColumnsChange,
         handleFlexAlignChange,
     } = usePropertySetting();
@@ -73,6 +76,14 @@ export function PropertySetting() {
                                                 handleContentChange={handleContentChange}
                                             />
                                         )}
+
+                                    {elementType === ComponentIdEnums.button && (
+                                        <ButtonLinkSetting
+                                            elementId={element.id}
+                                            href={localHref}
+                                            onChange={handleHrefChange}
+                                        />
+                                    )}
 
                                     {(elementType === ComponentIdEnums.text ||
                                         elementType === ComponentIdEnums.button) && (

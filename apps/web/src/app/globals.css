@@ -21,6 +21,13 @@ body {
     overflow-x: hidden;
 }
 
+/* 讓公開頁按鈕的「捲動至元素」錨點連結（href="#elementId"）用平滑捲動，
+   不是瞬間跳過去。scroll-behavior 不會被子層繼承，畫布/側欄那些自己
+   overflow-y-auto 的捲動容器不受影響，只有捲動整個文件（html）本身才會套用。 */
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     color: var(--foreground);
     background: var(--background);

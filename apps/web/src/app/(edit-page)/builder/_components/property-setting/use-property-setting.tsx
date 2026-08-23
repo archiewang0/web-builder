@@ -28,21 +28,25 @@ export function usePropertySetting() {
 
     const [localContent, setLocalContent] = useState<string>('');
     const [localStyles, setLocalStyles] = useState<StylesSchema>({});
+    const [localHref, setLocalHref] = useState<string>('');
 
     // 記錄「這個面板自己最後寫入 store 的值」，用來分辨 element 參照變動是
     // 自己 debounce 回寫的 echo，還是外部變動（例如畫布拖拉調整圖片寬度）。
     // 只有外部變動才需要同步覆蓋本地狀態，否則會在打字中途被舊值蓋掉。
     const lastWrittenContentRef = useRef<string | undefined>(undefined);
     const lastWrittenStylesRef = useRef<StylesSchema | undefined>(undefined);
+    const lastWrittenHrefRef = useRef<string | undefined>(undefined);
 
     useEffect(() => {
         lastWrittenContentRef.current = undefined;
         lastWrittenStylesRef.current = undefined;
+        lastWrittenHrefRef.current = undefined;
     }, [selectedElement]);
 
     useEffect(() => {
         if (isBodySelected) {
             setLocalContent('');
+            setLocalHref('');
             if (bodyStyles !== lastWrittenStylesRef.current) {
                 setLocalStyles(bodyStyles || {});
             }
@@ -51,6 +55,7 @@ export function usePropertySetting() {
         if (!element) {
             setLocalContent('');
             setLocalStyles({});
+            setLocalHref('');
             return;
         }
         const content = 'content' in element ? element.content || '' : '';
@@ -59,6 +64,10 @@ export function usePropertySetting() {
         }
         if (element.styles !== lastWrittenStylesRef.current) {
             setLocalStyles(element.styles || {});
+        }
+        const href = 'href' in element ? element.href || '' : '';
+        if (href !== lastWrittenHrefRef.current) {
+            setLocalHref(href);
         }
     }, [selectedElement, element, isBodySelected, bodyStyles]);
 
@@ -83,6 +92,18 @@ export function usePropertySetting() {
 
     const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         handleContentValueChange(e.target.value);
+    };
+
+    const updateHref = useDebouncedCallback((id: string, href: string) => {
+        lastWrittenHrefRef.current = href;
+        updateElement(id, { href: href || undefined } as Partial<ElementSchema>);
+    }, 300);
+
+    const handleHrefChange = (newValue: string) => {
+        setLocalHref(newValue);
+        if (selectedElement) {
+            updateHref(selectedElement, newValue);
+        }
     };
 
     const updateStyles = useDebouncedCallback((id: string, styles: StylesSchema) => {
@@ -143,10 +164,12 @@ export function usePropertySetting() {
         containerColumns,
         localContent,
         localStyles,
+        localHref,
         handleDelete,
         handleContentChange,
         handleContentValueChange,
         handleStyleChange,
+        handleHrefChange,
         handleColumnsChange,
         handleFlexAlignChange,
     };
