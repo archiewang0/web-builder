@@ -7,10 +7,17 @@ export interface ImageSettingProps {
     content: string;
     onChange: (content: string) => void;
     width?: string;
+    height?: string;
     onStyleChange: StyleChangeHandler;
 }
 
-export function ImageSetting({ content, onChange, width, onStyleChange }: ImageSettingProps) {
+export function ImageSetting({
+    content,
+    onChange,
+    width,
+    height,
+    onStyleChange,
+}: ImageSettingProps) {
     const resetButton = (
         <button
             type="button"
@@ -26,7 +33,7 @@ export function ImageSetting({ content, onChange, width, onStyleChange }: ImageS
             <div className="space-y-2 p-2 border border-gray-200 rounded-lg">
                 <ImageUrlInput value={content} onChange={onChange} />
 
-                <ImageSizeSetting width={width} onChange={onStyleChange} />
+                <ImageSizeSetting width={width} height={height} onChange={onStyleChange} />
             </div>
         </CollapsibleSection>
     );

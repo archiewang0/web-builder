@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { Save } from 'lucide-react';
-import { SAVE_LABEL, type SaveStatus } from './sidebar/use-save-page';
+import { SAVE_LABEL, type SaveStatus } from './use-save-page';
 
 interface SaveButtonProps {
     status: SaveStatus;

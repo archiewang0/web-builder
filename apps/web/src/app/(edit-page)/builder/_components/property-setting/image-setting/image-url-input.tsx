@@ -1,7 +1,6 @@
 'use client';
 
 import { useImageUpload } from './use-image-upload';
-import { useImageMeta } from './use-image-meta';
 
 export interface ImageUrlInputProps {
     value: string;
@@ -17,7 +16,6 @@ export function ImageUrlInput({
     placeholder = 'https://... 圖片網址',
 }: ImageUrlInputProps) {
     const { fileInputRef, openFileDialog, handleFileChange, error } = useImageUpload(onChange);
-    const meta = useImageMeta(value);
 
     return (
         <>
@@ -57,13 +55,6 @@ export function ImageUrlInput({
                     onChange={handleFileChange}
                 />
             </div>
-
-            {meta && (
-                <div className="pl-14 text-xs text-gray-500">
-                    {meta.width} × {meta.height} px
-                    {meta.format && ` · ${meta.format}`}
-                </div>
-            )}
 
             {error && <div className="pl-14 text-xs text-red-600">{error}</div>}
         </>

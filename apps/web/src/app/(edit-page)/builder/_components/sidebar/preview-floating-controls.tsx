@@ -2,7 +2,7 @@ import { EyeOff } from 'lucide-react';
 import { useHeaderStore } from '@/store/use-header-store';
 import { DeviceSwitcher } from './device-switcher';
 import { SaveButton } from './save-button';
-import { useSavePage } from './sidebar/use-save-page';
+import { useSavePage } from './use-save-page';
 
 // 預覽模式下 header／sidebar／property-bar 都收起來，
 // 只留這顆浮動小工具負責「返回編輯」跟「儲存」，畫面才不會被常駐 UI 壓縮。

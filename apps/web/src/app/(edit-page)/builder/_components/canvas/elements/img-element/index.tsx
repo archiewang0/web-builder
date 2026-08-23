@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import classNames from 'classnames';
 import { Image as ImageIcon } from 'lucide-react';
 import { useImageResize } from './use-image-resize';
@@ -9,7 +9,10 @@ interface ImgElementProps {
     id: string;
     content?: string;
     elementProperty: { [key: string]: any };
+    unit?: 'percent' | 'px';
     widthPercent?: number;
+    widthPx?: number;
+    heightPx?: number;
     onResizeWidth?: (percent: number) => void;
 }
 
@@ -23,9 +26,13 @@ export function ImgElement({
     id,
     content,
     elementProperty,
+    unit = 'percent',
     widthPercent = 100,
+    widthPx,
+    heightPx,
     onResizeWidth,
 }: ImgElementProps) {
+    const isPxMode = unit === 'px';
     const { wrapperRef, displayPercent, startResize, handleDragStart } = useImageResize({
         widthPercent,
         onResizeWidth,
@@ -45,16 +52,6 @@ export function ImgElement({
     );
     const hasImage = Boolean(content);
 
-    // 換圖時先清掉舊尺寸，避免顯示上一張圖片殘留的自然尺寸
-    const [naturalWidth, setNaturalWidth] = useState<number | null>(null);
-    useEffect(() => {
-        setNaturalWidth(null);
-    }, [content]);
-
-    const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-        setNaturalWidth(e.currentTarget.naturalWidth);
-    };
-
     return (
         <div
             ref={setRefs}
@@ -62,11 +59,16 @@ export function ImgElement({
             onDragStart={handleDragStart}
             style={
                 hasImage
-                    ? {
-                          ...style,
-                          width: `${displayPercent}%`,
-                          maxWidth: naturalWidth ?? PLACEHOLDER_WIDTH,
-                      }
+                    ? isPxMode
+                        ? {
+                              ...style,
+                              width: widthPx ?? PLACEHOLDER_WIDTH,
+                              height: heightPx ?? PLACEHOLDER_HEIGHT,
+                          }
+                        : {
+                              ...style,
+                              width: `${displayPercent}%`,
+                          }
                     : {
                           ...style,
                           width: '100%',
@@ -85,14 +87,16 @@ export function ImgElement({
                     src={content}
                     alt="元件圖片"
                     draggable={false}
-                    onLoad={handleImageLoad}
                     style={{
                         display: 'block',
                         width: '100%',
-                        height: 'auto',
+                        height: isPxMode ? '100%' : 'auto',
                         borderRadius: style?.borderRadius,
                     }}
-                    className="pointer-events-auto rounded"
+                    className={classNames(
+                        'pointer-events-auto rounded',
+                        isPxMode && 'object-cover'
+                    )}
                 />
             ) : (
                 <div
@@ -103,18 +107,25 @@ export function ImgElement({
                     <span className="text-xs text-gray-400">尚未設定圖片</span>
                 </div>
             )}
-            <div
-                draggable={false}
-                onPointerDownCapture={(e) => e.stopPropagation()}
-                onMouseDown={startResize('left')}
-                className={classNames(handleClassName, 'left-0 -translate-x-1/2')}
-            />
-            <div
-                draggable={false}
-                onPointerDownCapture={(e) => e.stopPropagation()}
-                onMouseDown={startResize('right')}
-                className={classNames(handleClassName, 'right-0 translate-x-1/2')}
-            />
+
+            {/* image resize bar：px 模式的寬高由屬性面板輸入框直接控制，
+                拖曳把手是針對「相對父層百分比」設計的，px 模式下不適用，先隱藏 */}
+            {!isPxMode && (
+                <>
+                    <div
+                        draggable={false}
+                        onPointerDownCapture={(e) => e.stopPropagation()}
+                        onMouseDown={startResize('left')}
+                        className={classNames(handleClassName, 'left-0 -translate-x-1/2')}
+                    />
+                    <div
+                        draggable={false}
+                        onPointerDownCapture={(e) => e.stopPropagation()}
+                        onMouseDown={startResize('right')}
+                        className={classNames(handleClassName, 'right-0 translate-x-1/2')}
+                    />
+                </>
+            )}
         </div>
     );
 }

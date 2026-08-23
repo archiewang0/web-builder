@@ -104,6 +104,7 @@ export function PropertySetting() {
                                                 content={localContent}
                                                 onChange={handleContentValueChange}
                                                 width={localStyles.width}
+                                                height={localStyles.height}
                                                 onStyleChange={handleStyleChange}
                                             />
                                         </>

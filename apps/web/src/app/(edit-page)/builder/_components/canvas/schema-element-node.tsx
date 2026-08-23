@@ -107,14 +107,22 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
             );
 
         case ComponentIdEnums.image: {
-            const widthValue = data.styles?.width ? parseInt(data.styles.width, 10) : NaN;
+            // 單位（% or px）直接看 styles.width 的後綴，跟 image-size-setting.tsx
+            // 判斷方式一致，不用另外存一個 unit 欄位。
+            const rawWidth = data.styles?.width;
+            const isPxUnit = Boolean(rawWidth && rawWidth.endsWith('px'));
+            const widthValue = rawWidth ? parseInt(rawWidth, 10) : NaN;
+            const heightValue = data.styles?.height ? parseInt(data.styles.height, 10) : NaN;
             return (
                 <ImgElement
                     key={data.id}
                     id={data.id}
                     elementProperty={elementProperty}
                     content={data.content}
-                    widthPercent={Number.isNaN(widthValue) ? 100 : widthValue}
+                    unit={isPxUnit ? 'px' : 'percent'}
+                    widthPercent={!isPxUnit && !Number.isNaN(widthValue) ? widthValue : 100}
+                    widthPx={isPxUnit && !Number.isNaN(widthValue) ? widthValue : undefined}
+                    heightPx={isPxUnit && !Number.isNaN(heightValue) ? heightValue : undefined}
                     onResizeWidth={(percent) =>
                         updateElement(data.id, {
                             styles: { ...data.styles, width: `${percent}%` },

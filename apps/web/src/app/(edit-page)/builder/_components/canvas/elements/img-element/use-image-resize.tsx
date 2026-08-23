@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-
-const MIN_WIDTH_PERCENT = 1;
+import {
+    IMG_MIN_WIDTH_PERCENT,
+    IMG_MAX_WIDTH_PERCENT,
+} from '@/app/(edit-page)/builder/_components/_const/img';
 
 type ResizeSide = 'left' | 'right';
 
@@ -32,9 +34,12 @@ export function useImageResize({ widthPercent, onResizeWidth }: UseImageResizeOp
             const direction = state.side === 'right' ? 1 : -1;
             const deltaX = e.clientX - state.startX;
             const newPixelWidth = Math.max(state.startPixelWidth + direction * deltaX, 1);
-            const newPercent = Math.max(
-                MIN_WIDTH_PERCENT,
-                Math.round((newPixelWidth / state.parentWidth) * 100)
+            const newPercent = Math.min(
+                IMG_MAX_WIDTH_PERCENT,
+                Math.max(
+                    IMG_MIN_WIDTH_PERCENT,
+                    Math.round((newPixelWidth / state.parentWidth) * 100)
+                )
             );
             latestPercentRef.current = newPercent;
             setPreviewPercent(newPercent);

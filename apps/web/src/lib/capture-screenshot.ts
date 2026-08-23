@@ -9,7 +9,10 @@ const MIN_QUALITY = 0.3;
 // 再用 canvas 依比例縮放並「置中裁切、頂部對齊」（畫面通常比 16:9 更長，
 // 對齊頂部才能保留最有代表性的頁首內容），最後用 JPEG 品質遞減確保檔案不超過 500KB。
 export async function captureScreenshot(node: HTMLElement): Promise<Blob> {
-    const dataUrl = await toPng(node, { pixelRatio: 1, backgroundColor: '#ffffff' });
+    // 不能傳 backgroundColor 選項——html-to-image 會拿它直接覆寫截圖節點（也就是
+    // Body 元素）本身的 background-color，把使用者設定的 Body 背景色蓋成白色。
+    // 下面 canvas 合成階段自己已經有一層白底 fillRect 兜底，不需要靠這個選項防透明。
+    const dataUrl = await toPng(node, { pixelRatio: 1 });
     const image = await loadImage(dataUrl);
 
     const canvas = document.createElement('canvas');

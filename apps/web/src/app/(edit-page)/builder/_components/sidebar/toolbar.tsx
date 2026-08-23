@@ -2,8 +2,8 @@ import { Eye, EyeOff, Globe, Lock } from 'lucide-react';
 import { useHeaderStore } from '@/store/use-header-store';
 import { usePageTitleStore } from '@/store/use-page-title-store';
 import { usePageVisibilityStore } from '@/store/use-page-visibility-store';
-import { DeviceSwitcher } from '../device-switcher';
-import { SaveButton } from '../save-button';
+import { DeviceSwitcher } from './device-switcher';
+import { SaveButton } from './save-button';
 import { useSavePage } from './use-save-page';
 
 // 裝置切換／預覽／儲存：builder 專屬功能，常駐工具列。
@@ -33,7 +33,11 @@ export function Toolbar() {
             </div>
             <div className="flex items-center justify-between gap-2 px-1">
                 <span className="flex items-center gap-1 text-xs text-gray-500">
-                    {isPublic ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                    {isPublic ? (
+                        <Globe className="w-3.5 h-3.5" />
+                    ) : (
+                        <Lock className="w-3.5 h-3.5" />
+                    )}
                     {isPublic ? '公開頁面' : '私密頁面'}
                 </span>
                 <button
@@ -62,14 +66,14 @@ export function Toolbar() {
                             : 'bg-gray-100 hover:bg-gray-200'
                     }`}
                 >
-                    {isPreviewMode ? (
-                        <EyeOff className="w-4 h-4" />
-                    ) : (
-                        <Eye className="w-4 h-4" />
-                    )}
+                    {isPreviewMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     <span>{isPreviewMode ? '編輯' : '預覽'}</span>
                 </button>
-                <SaveButton status={status} onClick={handleSave} className="flex-1 rounded-lg shadow-md" />
+                <SaveButton
+                    status={status}
+                    onClick={handleSave}
+                    className="flex-1 rounded-lg shadow-md"
+                />
             </div>
         </div>
     );

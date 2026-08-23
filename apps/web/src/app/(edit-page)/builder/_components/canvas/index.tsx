@@ -50,7 +50,7 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
     return (
         <main
             className={classNames(
-                ' h-[calc(100vh-50px)]',
+                !isPreviewMode && ' h-[calc(100vh-50px)]',
                 'flex-1 w-full flex flex-col bg-gray-100  '
             )}
             onClick={(e) => {
