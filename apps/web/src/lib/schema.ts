@@ -31,6 +31,7 @@ export interface StylesSchema {
     padding?: string;
     margin?: string;
     backgroundColor?: string;
+    boxShadow?: string;
     color?: string;
     fontSize?: string;
     fontFamily?: string;

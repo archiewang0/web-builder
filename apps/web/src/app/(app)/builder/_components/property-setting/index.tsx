@@ -8,6 +8,7 @@ import { ElementId } from './element-id';
 import { ComponentId } from './component-id';
 import { MarginSetting } from './margin-setting';
 import { BorderSetting } from './border-setting';
+import { ShadowSetting } from './shadow-setting';
 import { StyleChangeHandler } from '../../_types/property-setting-types';
 import { FontSetting } from './font-setting';
 import { LayoutSetting } from './layout-setting';
@@ -181,6 +182,11 @@ export function PropertySetting() {
                                                 borderColor: undefined,
                                             })
                                         }
+                                    />
+                                    <ShadowSetting
+                                        boxShadow={localStyles.boxShadow}
+                                        onChange={handleStyleChange}
+                                        onReset={() => handleStyleChange({ boxShadow: undefined })}
                                     />
                                 </div>
                             ) : (

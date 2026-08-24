@@ -67,7 +67,7 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                     這層的左邊界，比置中後的裝置外框更靠左，兩者就對不齊。 */}
                 <div className={classNames('flex-1 overflow-y-auto', !isPreviewMode && 'p-6')}>
                     <div
-                        className="h-full bg-white shadow-xl rounded-lg transition-all duration-300 "
+                        className="h-full bg-white shadow-xl rounded-lg transition-all duration-300"
                         style={{
                             width: DEVICES.find((d) => d.id === activeDevice)?.width,
                             maxWidth: '100%',
@@ -88,6 +88,7 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                             id="canvas"
                             className={classNames(
                                 !isPreviewMode && 'z-0',
+                                'p-5',
                                 // 不能加 padding——Body 自己是 fixed navbar 的祖先，只要
                                 // Body 跟裝置外框（containing block）之間有任何 padding，
                                 // position: fixed 的子孫就會直接無視它、緊貼裝置外框對齊，

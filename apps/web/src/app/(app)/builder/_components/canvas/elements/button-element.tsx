@@ -46,7 +46,7 @@ export function ButtonElement({
                 style={style}
                 onClick={handleClick}
                 className={classNames(
-                    ' shadow-md pointer-events-auto cursor-pointer transition-all hover:opacity-50 rounded px-4 py-2',
+                    ' pointer-events-auto cursor-pointer transition-all hover:opacity-50 rounded px-4 py-2',
                     selectedStyle
                 )}
             >
