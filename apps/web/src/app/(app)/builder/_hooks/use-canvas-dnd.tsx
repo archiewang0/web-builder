@@ -16,7 +16,12 @@ import {
     ContainerElementSchema,
     BODY_ELEMENT_ID,
 } from '@/lib/schema';
-import { computeReorder, getDropPosition, type DropPosition } from '@/lib/schema-tree';
+import {
+    computeReorder,
+    getDropPosition,
+    isContainerElement,
+    type DropPosition,
+} from '@/lib/schema-tree';
 import { createElement, createPreset } from '@/app/(app)/builder/_libs/element-factory';
 import type { LogEvent } from '@/app/(app)/builder/_components/canvas/event-log/use-event-logger';
 
@@ -100,10 +105,6 @@ export interface ExistingElementDragData {
 }
 export type ActiveDragData = NewComponentDragData | NewPresetDragData | ExistingElementDragData;
 
-interface DroppableData {
-    componentId?: ComponentIdEnums;
-}
-
 export function useCanvasDnd(logEvent: LogEvent) {
     const schema = useSchemaStore((state) => state.schema);
     const setSchema = useSchemaStore((state) => state.setSchema);
@@ -138,6 +139,30 @@ export function useCanvasDnd(logEvent: LogEvent) {
         setActiveDragData(null);
         pointerStartYRef.current = null;
         lastDropPositionComputeAtRef.current = 0;
+    }
+
+    // 用「滑鼠現在真正的即時 Y 座標」算 dropPosition，不管拖的是 sidebar 新元件
+    // 還是既有元素——一律用 pointerStartYRef + delta 還原滑鼠位置，不用被拖曳
+    // 東西本身的 rect（sidebar 拖曳時那是一張跟實際元素大小毫無關係的小預覽卡片，
+    // 用它的 rect 當依據就是「用抓的東西本身當標準」，大小不一，沒有一致依據）。
+    // handleDragMove 節流算出來的 dropPosition 是拖曳中即時提示用；放手那一刻
+    // （handleDragEnd）另外呼叫這個函式重新算一次最新的，不吃節流後可能過期的
+    // state——拖曳速度快、放手前最後一次節流間隔內滑鼠又移動過的話，state 裡
+    // 留著的會是舊的目標位置，實際套用的位置就會跟畫面上看到的插入線對不起來。
+    function computeLiveDropPosition(
+        over: { id: string | number; rect: { top: number; height: number } } | null | undefined,
+        delta: { x: number; y: number }
+    ): DropPosition | null {
+        if (!over) return null;
+        const overRect = over.rect;
+        if (!overRect) return null;
+
+        const pointerY =
+            pointerStartYRef.current !== null ? pointerStartYRef.current + delta.y : undefined;
+        if (pointerY === undefined) return null;
+
+        const isContainer = isContainerElement(elementMap, String(over.id));
+        return getDropPosition(overRect, pointerY, isContainer);
     }
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -202,31 +227,23 @@ export function useCanvasDnd(logEvent: LogEvent) {
         lastDropPositionComputeAtRef.current = now;
 
         // sidebar 拖新元件跟既有元素 reorder 共用同一套插入位置判斷（before/after/
-        // inside），才能在拖新元件時也看到插入線／容器高亮，不然使用者完全看不出
-        // 「放手後會插在哪裡」。
-        const overRect = over.rect;
-        if (!overRect) return;
-
-        // 用滑鼠實際的即時 Y 座標判斷，不要用「被拖曳元素本身的 rect 中心」——
-        // 空容器可能矮到只剩 padding（例如 44px），被拖曳的元素只要比它高，
-        // 元素中心點永遠不會落在容器範圍內，會一直誤判成 before/after，
-        // 導致完全塞不進空容器。拿不到即時滑鼠座標（理論上不會發生）才退回
-        // 用被拖曳元素的 rect 中心當備援。
-        const pointerY =
-            pointerStartYRef.current !== null
-                ? pointerStartYRef.current + delta.y
-                : (active.rect.current.translated ?? active.rect.current.initial)?.top;
-        if (pointerY === undefined) return;
-
-        const overData = over.data.current as DroppableData | undefined;
-        const isContainer = overData?.componentId === ComponentIdEnums.container;
-        const position = getDropPosition(overRect, pointerY, isContainer);
+        // inside，見 computeLiveDropPosition），才能在拖新元件時也看到插入線／
+        // 容器高亮，不然使用者完全看不出「放手後會插在哪裡」。這裡算出來的只是
+        // 拖曳中即時提示用；真正決定要套用哪個位置是放手那一刻在 handleDragEnd
+        // 另外重算一次最新的，不會用這裡節流後可能過期的值。
+        const position = computeLiveDropPosition(over, delta);
+        if (position === null) return;
         setDropPosition((prev) => (prev === position ? prev : position));
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
+        const { active, over, delta } = event;
         const data = active.data.current as ActiveDragData | undefined;
+        // 放手這一刻重新算一次最新的 dropPosition，不要沿用 state 裡可能因為
+        // handleDragMove 節流（300ms 一次）而過期的舊值——拖曳速度快、最後一段
+        // 節流間隔內滑鼠又移動過的話，state 留著的會是舊目標位置，套用結果就會
+        // 跟畫面上看到的插入線對不起來。
+        const liveDropPosition = computeLiveDropPosition(over, delta);
 
         // 樣板（目前只有 navbar）完全不管 over/dropPosition 是什麼——不管拖去哪裡、
         // 就算放到某個既有 container 上面，一律強制插進 Body 最上層（陣列最前面）。
@@ -254,13 +271,12 @@ export function useCanvasDnd(logEvent: LogEvent) {
         }
 
         if (data?.type === 'new-component') {
-            const overData = over?.data.current as DroppableData | undefined;
             const newElement = createElement(
                 data.componentId,
                 { x: 0, y: 0 },
                 schema.elements.length
             );
-            insertElement(newElement, over ? String(over.id) : null, overData, dropPosition);
+            insertElement(newElement, over ? String(over.id) : null, liveDropPosition);
             reset();
             return;
         }
@@ -294,18 +310,18 @@ export function useCanvasDnd(logEvent: LogEvent) {
             // 只在放手這一刻算一次、套用一次，避免元素在拖曳過程中位移，
             // 造成 dnd-kit 重新量測 rect → dragover 又觸發 → 又重排的無限迴圈，
             // 也讓使用者拖曳時目標不會一直跑掉。
-            if (over.id !== active.id && dropPosition) {
+            if (over.id !== active.id && liveDropPosition) {
                 const overIdStr = String(over.id);
                 const result = computeReorder(
                     schema.elements,
                     elementMap,
                     draggedId,
                     overIdStr,
-                    dropPosition
+                    liveDropPosition
                 );
                 if (process.env.NODE_ENV === 'development') {
-                    logEvent(draggedId, overIdStr, schema.elements, result, dropPosition);
-                    console.log('🔵 [element drag] drop committed:', dropPosition);
+                    logEvent(draggedId, overIdStr, schema.elements, result, liveDropPosition);
+                    console.log('🔵 [element drag] drop committed:', liveDropPosition);
                 }
                 setSchema((prev) => ({ ...prev, elements: result }));
             }
@@ -321,7 +337,6 @@ export function useCanvasDnd(logEvent: LogEvent) {
     function insertElement(
         newElement: ElementSchema,
         overElementId: string | null,
-        overData: DroppableData | undefined,
         dropPosition: DropPosition | null
     ) {
         if (!overElementId || overElementId === BODY_ELEMENT_ID) {
@@ -332,7 +347,12 @@ export function useCanvasDnd(logEvent: LogEvent) {
         const targetNode = elementMap.get(overElementId);
         if (!targetNode) return;
         const { path: nodePath, parent: nodeParent } = targetNode;
-        const isContainer = overData?.componentId === ComponentIdEnums.container;
+        const isContainer = isContainerElement(elementMap, overElementId);
+
+        // 暫時除錯用，確認完可以拿掉。
+        if (process.env.NODE_ENV === 'development') {
+            console.log('🧭 [insertElement commit]', { overElementId, isContainer, dropPosition });
+        }
 
         if (isContainer && dropPosition === 'inside') {
             setSchema((prev) => {

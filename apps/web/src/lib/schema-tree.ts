@@ -98,10 +98,7 @@ export function computeReorder(
     // Step 3: 依 dropPosition 插入到目標位置。'inside' 只有 target 是 container
     // 才塞進它的 children；其餘情況（包含 target 不是 container 卻收到
     // 'inside' 的防呆）都當成插在 target 同層的前面／後面。
-    if (
-        dropPosition === 'inside' &&
-        targetNode.element.componentId === ComponentIdEnums.container
-    ) {
+    if (dropPosition === 'inside' && isContainerElement(elementMap, targetId)) {
         const container = getElementAtPath(newElements, targetPath) as ContainerElementSchema;
         container.children.push(draggedElement!);
     } else {
@@ -121,14 +118,11 @@ interface RectLike {
     height: number;
 }
 
-// 上下緣各留固定 EDGE_ZONE_PX 寬的判定帶，不隨 target 本身的大小縮放。
+// 上緣留固定 EDGE_ZONE_PX 寬的判定帶，不隨 target 本身的大小縮放。
 // 不用「相對 target 高度的比例」（例如之前的 50% 對半分）——target 越大，
 // 比例算出來的 before/after 判定區就跟著等比放大，變成一大片模糊區域，滑鼠
 // 稍微移動就整片算同一邊，反而不精準；target 大到接近整個畫布時，甚至逼滑鼠
 // 要整個移出它的範圍才能插在旁邊，幾乎摸不到 before/after。
-// 改成固定像素：不管 target 多大，滑鼠只要落在上/下緣固定這麼寬的範圍內，
-// 就是 before/after，讓使用者用同樣精細度的滑鼠移動就能命中，不被 target
-// 大小牽著跑；扣掉這兩段固定帶之後剩下的中間區域，container 才算 inside。
 const EDGE_ZONE_PX = 16;
 
 export function getDropPosition(
@@ -140,8 +134,18 @@ export function getDropPosition(
     const offsetFromBottom = targetRect.height - offsetFromTop;
 
     if (offsetFromTop < EDGE_ZONE_PX) return 'before';
+
+    // container 的下緣不再切一段固定寬度的 after 判定帶——container 矮的話
+    // （例如空容器只剩 padding 撐出的高度），上緣扣掉一段之後，剩下能命中
+    // inside 的區域會被壓縮成很窄一條，滑鼠稍微沒對準就滑進 after，變成
+    // 「明明想塞進去卻被丟到它外面、變成同層的下一個元素」。
+    // 只要滑鼠還在 container 的範圍內（offsetFromBottom >= 0），扣掉上緣後
+    // 全部算 inside；真的移到它下緣以外（例如它是同層最後一個，靠鄰近命中
+    // 撿到它）才算 after——這樣還是能把新元素插在它後面，只是要滑鼠貼在最
+    // 上緣才能插在它前面，其他情況一律優先塞進去。
+    if (isContainer) return offsetFromBottom < 0 ? 'after' : 'inside';
+
     if (offsetFromBottom < EDGE_ZONE_PX) return 'after';
-    if (isContainer) return 'inside';
     return offsetFromTop < offsetFromBottom ? 'before' : 'after';
 }
 
@@ -178,4 +182,12 @@ export function buildElementMap(
     map.clear();
     traverse(elements);
     return map;
+}
+
+// 判斷某個 id 指到的元素是不是 container——一律查 elementMap（schema 本身的資料），
+// 不要另外從 DOM／dnd-kit droppable 掛的 data 猜。拖曳過程中 (handleDragMove) 跟
+// 放手那一刻 (insertElement/computeReorder) 都要用同一份依據判斷，才不會兩邊各自
+// 維護一套「target 是不是 container」的邏輯、算出不一致的結果。
+export function isContainerElement(elementMap: Map<string, ElementMapNode>, id: string): boolean {
+    return elementMap.get(id)?.element.componentId === ComponentIdEnums.container;
 }
