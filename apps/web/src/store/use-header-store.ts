@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DeviceIdEnums } from '../components/header/use-header';
+import { DeviceIdEnums } from '../components/header/devices';
 
 interface HeaderStore {
     activeDevice: DeviceIdEnums;

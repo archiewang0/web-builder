@@ -1,4 +1,4 @@
-import type { CanvasSchema, ElementSchema } from '@/store/use-schema-store';
+import type { CanvasSchema, ElementSchema } from '@/lib/schema';
 import { extractBackgroundImageUrl } from '@/lib/extract-background-image-url';
 
 const IMAGE_API_PREFIX = '/api/image?pathname=';
@@ -38,7 +38,9 @@ export function collectBlobPathnames(
 
     visit(schema.elements);
 
-    const bodyBgPathname = extractPathname(extractBackgroundImageUrl(schema.body?.styles?.backgroundImage));
+    const bodyBgPathname = extractPathname(
+        extractBackgroundImageUrl(schema.body?.styles?.backgroundImage)
+    );
     if (bodyBgPathname) found.add(bodyBgPathname);
 
     if (thumbnailPath) found.add(thumbnailPath);

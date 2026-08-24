@@ -1,7 +1,7 @@
 import { eq, and, desc } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { users, pages } from './schema';
-import type { CanvasSchema } from '@/store/use-schema-store';
+import type { CanvasSchema } from '@/lib/schema';
 
 export interface UpsertUserInput {
     id: string;

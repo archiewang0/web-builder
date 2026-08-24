@@ -1,78 +1,12 @@
 import { create } from 'zustand';
-import { ComponentIdEnums } from '@/app/(edit-page)/builder/_components/sidebar/use-sidebar';
-import { buildElementMap, ElementMapNode } from '@/app/(edit-page)/builder/_components/canvas/lib';
-import { PresetIdEnums } from '@/app/(edit-page)/builder/_components/_types/preset-id-enums';
-
-// 選取狀態用這個值代表選到的是 Body（畫布背景），不是 elements 陣列裡的某個節點。
-// 用固定字串而不是擴充 selectedElement 的型別，是因為真正的元素 id 都是 uuid，不會跟它撞到。
-export const BODY_ELEMENT_ID = '__body__';
-
-// 樣式屬性，元素跟 Body 共用同一份形狀
-export interface StylesSchema {
-    width?: string;
-    height?: string;
-    padding?: string;
-    margin?: string;
-    backgroundColor?: string;
-    color?: string;
-    fontSize?: string;
-    fontFamily?: string;
-    fontWeight?: string;
-    [key: string]: string | undefined;
-}
-
-// 基礎元素屬性（所有元素共用）
-interface BaseElementSchema {
-    id: string;
-    componentId: ComponentIdEnums;
-    order: number;
-    position: {
-        x: number;
-        y: number;
-    };
-    styles?: StylesSchema;
-    className?: string;
-    props?: Record<string, any>;
-}
-
-// 非 Container 元素（文字、圖片、按鈕）
-export interface LeafElementSchema extends BaseElementSchema {
-    componentId: ComponentIdEnums.text | ComponentIdEnums.image | ComponentIdEnums.button;
-    content?: string;
-    // 目前只有 button 會用到。單一欄位同時表達兩種連結模式，用值本身的格式分流，
-    // 不用另外存一個 linkType 欄位：'#' 開頭 = 捲動到 id 等於後面那段字串的元素，
-    // 其餘視為外部網址——跟 image-size-setting.tsx 用 width 字串後綴判斷 px/% 是同一種做法。
-    href?: string;
-}
-
-// Container 元素（可包含子元素）
-export interface ContainerElementSchema extends BaseElementSchema {
-    componentId: ComponentIdEnums.container;
-    // undefined = flex 版面（由 justifyContent 控制對齊）；number = grid 版面（欄數），兩者互斥
-    columns?: number;
-    children: ElementSchema[];
-    // 標記這個 container 是從哪個樣板展開來的（目前只有 navbar）。純粹是 UI 開關用的
-    // 標籤，不影響渲染——child 結構仍然是普通 container/image/button，使用者可以
-    // 隨意增刪調整；只有屬性面板會依這個欄位決定要不要多顯示樣板專屬的控制項
-    // （例如 navbar 專屬的導覽列定位），不會出現在一般手動疊出來的 container 上。
-    variant?: PresetIdEnums;
-}
-
-// 聯合類型：元素可以是 Leaf 或 Container
-export type ElementSchema = LeafElementSchema | ContainerElementSchema;
-
-// Body：畫布的根背景層，每份頁面固定只有一個。不進 elements 陣列，
-// 不能拖曳新增也不能刪除，只提供背景色／背景圖設定，沿用既有的 BackgroundSetting UI。
-export interface BodySchema {
-    styles?: StylesSchema;
-}
-
-// 主 Schema 類型（Canvas 的完整結構）
-export interface CanvasSchema {
-    // 此功能上線前存的舊頁面不會有這個欄位，標成 optional，讀取時要自行補預設值。
-    body?: BodySchema;
-    elements: ElementSchema[];
-}
+import {
+    ComponentIdEnums,
+    ElementSchema,
+    ContainerElementSchema,
+    StylesSchema,
+    CanvasSchema,
+} from '@/lib/schema';
+import { buildElementMap, ElementMapNode } from '@/lib/schema-tree';
 
 interface SchemaStore {
     schema: CanvasSchema;

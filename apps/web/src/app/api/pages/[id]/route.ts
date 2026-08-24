@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { deletePageForUser, getPageById, upsertPageSchema } from '@/lib/db/queries';
 import { validatePageTitle } from '@/lib/validate-page-title';
 import { collectBlobPathnames } from '@/lib/collect-blob-pathnames';
-import type { CanvasSchema } from '@/store/use-schema-store';
+import type { CanvasSchema } from '@/lib/schema';
 
 interface RouteParams {
     params: Promise<{ id: string }>;

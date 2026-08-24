@@ -1,6 +1,5 @@
 import classNames from 'classnames';
-import { ComponentIdEnums } from '@/app/(edit-page)/builder/_components/_types/component-id-enums';
-import type { ElementSchema } from '@/store/use-schema-store';
+import { ComponentIdEnums, type ElementSchema } from '@/lib/schema';
 
 const GRID_COLS: Record<number, string> = {
     1: 'grid-cols-1',
@@ -43,7 +42,13 @@ function RenderSchemaElement({ element }: { element: ElementSchema }) {
             // 的空 div 撐住版面，只是沒有圖可以顯示而已。
             return element.content ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img id={element.id} src={element.content} alt="" style={style} className="rounded" />
+                <img
+                    id={element.id}
+                    src={element.content}
+                    alt=""
+                    style={style}
+                    className="rounded"
+                />
             ) : (
                 <div id={element.id} style={style} className="rounded" />
             );

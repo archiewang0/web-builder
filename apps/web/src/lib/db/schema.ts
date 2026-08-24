@@ -1,5 +1,5 @@
 import { pgTable, text, timestamp, jsonb, uuid, boolean } from 'drizzle-orm/pg-core';
-import type { CanvasSchema } from '@/store/use-schema-store';
+import type { CanvasSchema } from '@/lib/schema';
 
 // id 用 Google 的 sub（OIDC 裡的使用者唯一識別碼），不用 email——
 // email 理論上可能變動，sub 才是真正穩定的識別碼。
