@@ -11,18 +11,35 @@ const GRID_COLS: Record<number, string> = {
 
 // 公開展示頁專用的唯讀渲染器：只依 schema 畫出畫面，不帶任何編輯器的拖拽／
 // 選取／contentEditable 行為，避免把編輯能力意外洩漏給沒有登入的訪客。
-export function RenderSchemaElements({ elements }: { elements: ElementSchema[] }) {
+export function RenderSchemaElements({
+    elements,
+    assignIds = true,
+}: {
+    elements: ElementSchema[];
+    assignIds?: boolean;
+}) {
     return (
         <>
             {elements.map((element) => (
-                <RenderSchemaElement key={element.id} element={element} />
+                <RenderSchemaElement key={element.id} element={element} assignIds={assignIds} />
             ))}
         </>
     );
 }
 
-function RenderSchemaElement({ element }: { element: ElementSchema }) {
+function RenderSchemaElement({
+    element,
+    assignIds = true,
+}: {
+    element: ElementSchema;
+    assignIds?: boolean;
+}) {
     const style = element.styles as React.CSSProperties;
+    // fixed navbar 的隱形佔位 clone（見下方 container case）需要整棵子樹重渲染
+    // 一次來撐出正確高度，但不能讓子孫元素的 id 也跟著複製一份——否則
+    // document.getElementById／#anchor 連結會對到重複 id 裡的其中一個，
+    // 可能剛好選到看不見的那份。assignIds=false 時整棵子樹都不掛真正的 id。
+    const id = assignIds ? element.id : undefined;
 
     // 每個元素的最外層節點都掛上 id={element.id}——這樣按鈕的「捲動至元素」
     // 連結（href="#elementId"）才有實際的錨點可以跳，瀏覽器原生錨點導覽
@@ -30,7 +47,7 @@ function RenderSchemaElement({ element }: { element: ElementSchema }) {
     switch (element.componentId) {
         case ComponentIdEnums.text:
             return (
-                <div id={element.id} style={style} className="p-2 rounded whitespace-pre-wrap">
+                <div id={id} style={style} className="p-2 rounded whitespace-pre-wrap">
                     {element.content || '預設文字'}
                 </div>
             );
@@ -42,15 +59,9 @@ function RenderSchemaElement({ element }: { element: ElementSchema }) {
             // 的空 div 撐住版面，只是沒有圖可以顯示而已。
             return element.content ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                    id={element.id}
-                    src={element.content}
-                    alt=""
-                    style={style}
-                    className="rounded"
-                />
+                <img id={id} src={element.content} alt="" style={style} className="rounded" />
             ) : (
-                <div id={element.id} style={style} className="rounded" />
+                <div id={id} style={style} className="rounded" />
             );
 
         case ComponentIdEnums.button: {
@@ -59,7 +70,7 @@ function RenderSchemaElement({ element }: { element: ElementSchema }) {
 
             if (!href) {
                 return (
-                    <button id={element.id} style={style} className={buttonClassName}>
+                    <button id={id} style={style} className={buttonClassName}>
                         {element.content || '按鈕'}
                     </button>
                 );
@@ -70,7 +81,7 @@ function RenderSchemaElement({ element }: { element: ElementSchema }) {
             const isScrollLink = href.startsWith('#');
             return (
                 <a
-                    id={element.id}
+                    id={id}
                     href={href}
                     style={style}
                     className={classNames('inline-block text-center no-underline', buttonClassName)}
@@ -84,20 +95,46 @@ function RenderSchemaElement({ element }: { element: ElementSchema }) {
 
         case ComponentIdEnums.container: {
             const isFlexMode = element.columns === undefined;
+            const containerClassName = classNames(
+                'relative w-full rounded-lg',
+                isFlexMode && 'flex flex-wrap gap-2',
+                !isFlexMode &&
+                    element.columns! > 1 &&
+                    `grid gap-2 ${GRID_COLS[element.columns!] ?? 'grid-cols-2'}`
+            );
+            const isFixed = style?.position === 'fixed';
+
             return (
-                <div
-                    id={element.id}
-                    style={style}
-                    className={classNames(
-                        'relative w-full rounded-lg',
-                        isFlexMode && 'flex flex-wrap gap-2',
-                        !isFlexMode &&
-                            element.columns! > 1 &&
-                            `grid gap-2 ${GRID_COLS[element.columns!] ?? 'grid-cols-2'}`
+                <>
+                    {isFixed && (
+                        // fixed 元素脫離文件排版，下方內容會被蓋住。這裡不用 JS 量高度
+                        // （公開頁是 SSR，訪客第一次看到畫面時 JS 可能都還沒 hydrate），
+                        // 改成直接把同一份內容再渲染一次、拿掉 fixed 定位、隱藏成不可見
+                        // 也不可互動（aria-hidden + inert），純粹用它自己撐出的高度去
+                        // 佔位，把後面的內容往下推。高度天生就會跟真正的 navbar 一致，
+                        // 響應式換行也會一起同步變動，不用另外處理。
+                        <div
+                            aria-hidden="true"
+                            inert
+                            style={{
+                                ...style,
+                                position: 'static',
+                                top: undefined,
+                                left: undefined,
+                                right: undefined,
+                                bottom: undefined,
+                                zIndex: undefined,
+                                visibility: 'hidden',
+                            }}
+                            className={containerClassName}
+                        >
+                            <RenderSchemaElements elements={element.children} assignIds={false} />
+                        </div>
                     )}
-                >
-                    <RenderSchemaElements elements={element.children} />
-                </div>
+                    <div id={id} style={style} className={containerClassName}>
+                        <RenderSchemaElements elements={element.children} assignIds={assignIds} />
+                    </div>
+                </>
             );
         }
     }

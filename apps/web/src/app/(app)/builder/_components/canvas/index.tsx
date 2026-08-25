@@ -71,16 +71,10 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                         style={{
                             width: DEVICES.find((d) => d.id === activeDevice)?.width,
                             maxWidth: '100%',
-                            // transform: translateZ(0) 是刻意留著的 CSS trick，不要當成沒用的
-                            // 殘留程式碼刪掉：只要祖先有 transform，position: fixed 的子孫
-                            // 元素就會改成相對這個祖先定位／裁切，而不是相對整個瀏覽器
-                            // viewport。這層 div 本身就是「裝置外框」——同時也是畫布實際
-                            // 在捲動的容器——三件事（寬度限制／捲動／containing block）
-                            // 疊在同一層，fixed 子孫元素的 width/left 才會跟裝置外框
-                            // 完全對齊，不會因為置中而偏移。公開頁
-                            // （site/[id]/render-schema.tsx）沒有套這個，fixed 在那邊維持
-                            // 正常相對整個瀏覽器 viewport 定位，行為才是對訪客正確的。
-                            transform: 'translateZ(0)',
+
+                            // CSS trick 為了內部的 fixed 元件, 可以對ftansform 的parent 進行定位, 以及寬度比例符合
+                            // 但 previewmode 就不需要了
+                            transform: isPreviewMode ? undefined : 'translateZ(0)',
                         }}
                     >
                         <div
@@ -88,7 +82,7 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                             id="canvas"
                             className={classNames(
                                 !isPreviewMode && 'z-0',
-                                'p-5',
+                                !isPreviewMode && 'p-5',
                                 // 不能加 padding——Body 自己是 fixed navbar 的祖先，只要
                                 // Body 跟裝置外框（containing block）之間有任何 padding，
                                 // position: fixed 的子孫就會直接無視它、緊貼裝置外框對齊，
