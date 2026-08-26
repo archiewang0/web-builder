@@ -1,5 +1,6 @@
 import type { CanvasSchema, ElementSchema } from '@/lib/schema';
 import { extractBackgroundImageUrl } from '@/lib/extract-background-image-url';
+import { getAllStyleLayers, mapStyleLayers } from '@/lib/responsive-styles';
 
 function isBlobUrl(value: string | undefined): value is string {
     return typeof value === 'string' && value.startsWith('blob:');
@@ -15,9 +16,11 @@ export function collectBlobUrls(schema: CanvasSchema): string[] {
             if ('content' in el && isBlobUrl(el.content)) {
                 found.add(el.content);
             }
-            const bg = extractBackgroundImageUrl(el.styles?.backgroundImage);
-            if (isBlobUrl(bg)) {
-                found.add(bg);
+            // 每一層（base/tablet/mobile）都要查——使用者可能在不同裝置設了
+            // 不同的背景圖，只看 base 會漏掉其他層還沒上傳的 blob。
+            for (const layer of getAllStyleLayers(el.styles)) {
+                const bg = extractBackgroundImageUrl(layer.backgroundImage);
+                if (isBlobUrl(bg)) found.add(bg);
             }
             if ('children' in el) {
                 visit(el.children);
@@ -27,9 +30,9 @@ export function collectBlobUrls(schema: CanvasSchema): string[] {
 
     visit(schema.elements);
 
-    const bodyBg = extractBackgroundImageUrl(schema.body?.styles?.backgroundImage);
-    if (isBlobUrl(bodyBg)) {
-        found.add(bodyBg);
+    for (const layer of getAllStyleLayers(schema.body?.styles)) {
+        const bodyBg = extractBackgroundImageUrl(layer.backgroundImage);
+        if (isBlobUrl(bodyBg)) found.add(bodyBg);
     }
 
     return [...found];
@@ -45,9 +48,15 @@ export function replaceBlobUrls(schema: CanvasSchema, urlMap: Map<string, string
                 next.content = urlMap.get(next.content);
             }
 
-            const bg = extractBackgroundImageUrl(next.styles?.backgroundImage);
-            if (isBlobUrl(bg) && urlMap.has(bg)) {
-                next.styles = { ...next.styles, backgroundImage: `url(${urlMap.get(bg)})` };
+            // 用 mapStyleLayers 逐層檢查置換——base/tablet/mobile 各自可能有
+            // 不同的背景圖 blob url，只換 base 會漏掉其他層。
+            if (next.styles) {
+                next.styles = mapStyleLayers(next.styles, (layer) => {
+                    const bg = extractBackgroundImageUrl(layer.backgroundImage);
+                    return isBlobUrl(bg) && urlMap.has(bg)
+                        ? { ...layer, backgroundImage: `url(${urlMap.get(bg)})` }
+                        : null;
+                });
             }
 
             if ('children' in next) {
@@ -58,14 +67,17 @@ export function replaceBlobUrls(schema: CanvasSchema, urlMap: Map<string, string
         });
     }
 
-    const bodyBg = extractBackgroundImageUrl(schema.body?.styles?.backgroundImage);
-    const body =
-        isBlobUrl(bodyBg) && urlMap.has(bodyBg)
-            ? {
-                  ...schema.body,
-                  styles: { ...schema.body?.styles, backgroundImage: `url(${urlMap.get(bodyBg)})` },
-              }
-            : schema.body;
+    const body = schema.body?.styles
+        ? {
+              ...schema.body,
+              styles: mapStyleLayers(schema.body.styles, (layer) => {
+                  const bg = extractBackgroundImageUrl(layer.backgroundImage);
+                  return isBlobUrl(bg) && urlMap.has(bg)
+                      ? { ...layer, backgroundImage: `url(${urlMap.get(bg)})` }
+                      : null;
+              }),
+          }
+        : schema.body;
 
     return { body, elements: visit(schema.elements) };
 }

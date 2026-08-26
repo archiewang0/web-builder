@@ -1,11 +1,39 @@
 import classNames from 'classnames';
-import { ComponentIdEnums, type ElementSchema } from '@/lib/schema';
+import { ComponentIdEnums, type ElementSchema, type StylesSchema } from '@/lib/schema';
+import { DeviceIdEnums } from '@/components/header/devices';
+import { buildResponsiveCss, resolveStyles } from '@/lib/responsive-styles';
 import {
     BUTTON_BASE_CLASSNAME,
     IMAGE_BASE_CLASSNAME,
     TEXT_BASE_CLASSNAME,
     getContainerBaseClassName,
 } from '@/lib/element-base-class';
+
+// page.tsx 的 Body 背景層外面那個 <div> 要用這個 id，buildResponsiveCss
+// 產生的 @media 規則才選得到它。
+export const BODY_STYLE_ID = '__page-body__';
+
+// 正式站台沒有裝置切換器，是瀏覽器真實視窗尺寸在變化，不能像編輯器那樣用
+// activeDevice 這個 JS 狀態去 cascade 合併——tablet/mobile 的覆寫要編譯成
+// 真正的 @media CSS 規則才會在瀏覽器裡生效，細節見 lib/responsive-styles.ts
+// 的 buildResponsiveCss。這裡只負責把整棵 schema 樹（+ Body）走一遍收集規則，
+// 不做任何渲染；呼叫端（page.tsx）把回傳的字串塞進一個 <style> 就好。
+// isFixed 的隱形佔位 clone（assignIds=false）沒有真正的 id，收集不到、也就
+// 不會有 @media 規則——它只是用來撐版面高度的佔位，不必是斷點精準。
+export function collectResponsiveCss(elements: ElementSchema[], bodyStyles?: StylesSchema): string {
+    const rules: string[] = [];
+    if (bodyStyles) rules.push(buildResponsiveCss(BODY_STYLE_ID, bodyStyles));
+
+    function visit(list: ElementSchema[]) {
+        for (const element of list) {
+            if (element.styles) rules.push(buildResponsiveCss(element.id, element.styles));
+            if ('children' in element) visit(element.children);
+        }
+    }
+    visit(elements);
+
+    return rules.filter(Boolean).join('\n');
+}
 
 // 公開展示頁專用的唯讀渲染器：只依 schema 畫出畫面，不帶任何編輯器的拖拽／
 // 選取／contentEditable 行為，避免把編輯能力意外洩漏給沒有登入的訪客。
@@ -32,7 +60,10 @@ function RenderSchemaElement({
     element: ElementSchema;
     assignIds?: boolean;
 }) {
-    const style = element.styles as React.CSSProperties;
+    // 這裡只解析出 base（桌面）當 inline style——跟編輯器不同，正式站台不會
+    // 用 JS 判斷裝置，tablet/mobile 是靠上面 collectResponsiveCss 產生的
+    // @media 規則在瀏覽器裡覆蓋掉這份 inline style。
+    const style = resolveStyles(element.styles, DeviceIdEnums.desktop) as React.CSSProperties;
     // fixed navbar 的隱形佔位 clone（見下方 container case）需要整棵子樹重渲染
     // 一次來撐出正確高度，但不能讓子孫元素的 id 也跟著複製一份——否則
     // document.getElementById／#anchor 連結會對到重複 id 裡的其中一個，

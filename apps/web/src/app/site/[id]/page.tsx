@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getPublicPageById } from '@/lib/db/queries';
-import { RenderSchemaElements } from './render-schema';
+import { DeviceIdEnums } from '@/components/header/devices';
+import { resolveStyles } from '@/lib/responsive-styles';
+import { BODY_STYLE_ID, RenderSchemaElements, collectResponsiveCss } from './render-schema';
 
 interface PageProps {
     params: Promise<{ id: string }>;
@@ -36,8 +38,14 @@ export default async function PublicSitePage({ params }: PageProps) {
         );
     }
 
+    const responsiveCss = collectResponsiveCss(page.schema.elements, page.schema.body?.styles);
+
     return (
-        <div style={page.schema.body?.styles as React.CSSProperties}>
+        <div
+            id={BODY_STYLE_ID}
+            style={resolveStyles(page.schema.body?.styles, DeviceIdEnums.desktop) as React.CSSProperties}
+        >
+            {responsiveCss && <style dangerouslySetInnerHTML={{ __html: responsiveCss }} />}
             <RenderSchemaElements elements={page.schema.elements} />
         </div>
     );

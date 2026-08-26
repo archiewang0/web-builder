@@ -5,6 +5,8 @@ import {
     LeafElementSchema,
     PresetIdEnums,
 } from '@/lib/schema';
+import { DeviceIdEnums } from '@/components/header/devices';
+import { writeStyles } from '@/lib/responsive-styles';
 import { IMG_DEFAULT_WIDTH_PX, IMG_DEFAULT_HEIGHT_PX } from '../_const/img';
 
 // 依 componentId 建出新元素（pure factory，不依賴 React）
@@ -26,7 +28,9 @@ export function createElement(
     // 直接進 px 模式，不用使用者自己手動切換。
     const styles =
         componentId === ComponentIdEnums.image
-            ? { width: `${IMG_DEFAULT_WIDTH_PX}px`, height: `${IMG_DEFAULT_HEIGHT_PX}px` }
+            ? {
+                  base: { width: `${IMG_DEFAULT_WIDTH_PX}px`, height: `${IMG_DEFAULT_HEIGHT_PX}px` },
+              }
             : undefined;
 
     return {
@@ -63,7 +67,7 @@ export function createNavbarPreset(order: number): ContainerElementSchema {
     ) as LeafElementSchema;
     // 樣板裡的 logo 是預覽用的合理尺寸，不用 createElement 圖片預設的 500x500
     // （那是給一般使用者手動插入的單張圖片用的預設值，logo 應該小很多）。
-    logo.styles = { ...logo.styles, width: '140px', height: '40px' };
+    logo.styles = writeStyles(logo.styles, DeviceIdEnums.desktop, { width: '140px', height: '40px' });
 
     const navLinks = ['首頁', '關於我們', '聯絡我們'].map((label, index) => {
         const button = withUniqueId(
@@ -80,7 +84,9 @@ export function createNavbarPreset(order: number): ContainerElementSchema {
     // columns: undefined 才是 flex 排版（見 schema-tree.ts 開頭 DropPosition 上面的型別註解），
     // 不然 createElement 給 container 的預設值是 columns: 1（grid 單欄），套不了 justifyContent。
     linksContainer.columns = undefined;
-    linksContainer.styles = { justifyContent: 'flex-end', alignItems: 'center', gap: '24px' };
+    linksContainer.styles = {
+        base: { justifyContent: 'flex-end', alignItems: 'center', gap: '24px' },
+    };
     linksContainer.children = navLinks;
 
     // logo 跟導覽連結包在同一個 2 欄 grid row 裡，不要直接讓 root 用 flex 並排——
@@ -92,7 +98,7 @@ export function createNavbarPreset(order: number): ContainerElementSchema {
         nextSeq()
     ) as ContainerElementSchema;
     row.columns = 2;
-    row.styles = { alignItems: 'center', gap: '24px' };
+    row.styles = { base: { alignItems: 'center', gap: '24px' } };
     row.children = [logo, linksContainer];
 
     const navbar = withUniqueId(
@@ -101,11 +107,13 @@ export function createNavbarPreset(order: number): ContainerElementSchema {
     ) as ContainerElementSchema;
     navbar.columns = undefined;
     navbar.styles = {
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px 24px',
-        backgroundColor: '#ffffff',
-        width: '100%',
+        base: {
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '16px 24px',
+            backgroundColor: '#ffffff',
+            width: '100%',
+        },
     };
     navbar.children = [row];
     // 標記這個 container 是 navbar 樣板展開出來的，屬性面板才知道要多顯示

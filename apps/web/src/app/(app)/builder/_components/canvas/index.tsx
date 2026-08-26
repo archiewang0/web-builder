@@ -6,6 +6,7 @@ import { DEVICES } from '@/components/header/devices';
 import { useHeaderStore } from '@/store/use-header-store';
 import { useSchemaStore } from '@/store/use-schema-store';
 import { BODY_ELEMENT_ID } from '@/lib/schema';
+import { resolveStyles } from '@/lib/responsive-styles';
 import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { PropertyBar } from './property-bar';
 import { SchemaElements } from './schema-elements';
@@ -92,7 +93,7 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                                 !isPreviewMode &&
                                     'gap-10 flex flex-col relative rounded-lg min-h-[600px] border-2 border-dashed border-gray-300 p-5 z-0 '
                             )}
-                            style={schema.body?.styles as React.CSSProperties}
+                            style={resolveStyles(schema.body?.styles, activeDevice) as React.CSSProperties}
                             // 點在畫布空白處（沒有點到任何 schema 元素，那些元素自己的 onClick
                             // 會先 stopPropagation）代表點到的是 Body 本身，選取 Body 而不是
                             // 讓事件繼續冒泡到 <main> 把選取清空。

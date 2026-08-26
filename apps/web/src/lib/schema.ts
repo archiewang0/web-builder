@@ -24,8 +24,8 @@ export enum PresetIdEnums {
 // 用固定字串而不是擴充 selectedElement 的型別，是因為真正的元素 id 都是 uuid，不會跟它撞到。
 export const BODY_ELEMENT_ID = '__body__';
 
-// 樣式屬性，元素跟 Body 共用同一份形狀
-export interface StylesSchema {
+// 單一裝置的樣式屬性，元素跟 Body 共用同一份形狀
+export interface StyleProps {
     width?: string;
     height?: string;
     padding?: string;
@@ -37,6 +37,23 @@ export interface StylesSchema {
     fontFamily?: string;
     fontWeight?: string;
     [key: string]: string | undefined;
+}
+
+// 響應式樣式：base 是桌面版（也是預設值），tablet/mobile 只存跟前一層不同的
+// 屬性，畫面呈現時用 cascade 疊加（跟 CSS max-width media query 疊加順序一致：
+// base → tablet 覆寫 → mobile 覆寫）。編輯器切換裝置時要讀寫哪一層、畫布渲染
+// 的疊加、正式站台的 @media 產生，一律透過 lib/responsive-styles.ts 的
+// resolveStyles／writeStyles／buildResponsiveCss，不要在別處手動疊值，
+// 才不會三個地方（editor cascade／site media query／面板顯示）各寫一套邏輯、
+// 行為兜不起來。
+//
+// 舊版（改版前）存的頁面 styles 是攤平的 StyleProps，沒有 base 這個 key；
+// resolveStyles／writeStyles 內部的 normalizeStyles 會自動把它當成 base
+// 處理，讀取端不用另外判斷資料是新是舊。
+export interface StylesSchema {
+    base: StyleProps;
+    tablet?: Partial<StyleProps>;
+    mobile?: Partial<StyleProps>;
 }
 
 // 基礎元素屬性（所有元素共用）

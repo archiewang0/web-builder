@@ -6,7 +6,9 @@ import classNames from 'classnames';
 import React from 'react';
 import { useSchemaStore } from '@/store/use-schema-store';
 import { useSelectedElementStore } from '@/store/use-selected-element-store';
+import { useHeaderStore } from '@/store/use-header-store';
 import { ComponentIdEnums, ElementSchema } from '@/lib/schema';
+import { resolveStyles, writeStyles } from '@/lib/responsive-styles';
 import { ButtonElement, ContainerElement, ImgElement, TextElement } from './elements';
 import type { DropPosition } from '@/lib/schema-tree';
 
@@ -26,6 +28,7 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
     const updateElement = useSchemaStore((state) => state.updateElement);
     const selectedElement = useSelectedElementStore((state) => state.selectedElement);
     const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
+    const activeDevice = useHeaderStore((state) => state.activeDevice);
 
     const isSelected = data.id === selectedElement;
 
@@ -85,7 +88,7 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
         ...attributes,
         ...listeners,
         style: {
-            ...(data.styles as React.CSSProperties),
+            ...(resolveStyles(data.styles, activeDevice) as React.CSSProperties),
             transform: transform ? CSS.Translate.toString(transform) : undefined,
             ...(isBeingDragged ? { opacity: 0.4 } : {}),
         },
@@ -112,12 +115,17 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
             );
 
         case ComponentIdEnums.image: {
-            // 單位（% or px）直接看 styles.width 的後綴，跟 image-size-setting.tsx
-            // 判斷方式一致，不用另外存一個 unit 欄位。
-            const rawWidth = data.styles?.width;
+            // 單位（% or px）跟寬高都要看「目前 activeDevice 解析後」的值——
+            // 使用者可能只在某個裝置覆寫過寬度，直接讀 data.styles.width（現在是
+            // 巢狀結構，且不一定是目前裝置那一層）會拿到錯的值，跟
+            // image-size-setting.tsx 的判斷方式要一致，都走 resolveStyles。
+            const resolvedImageStyles = resolveStyles(data.styles, activeDevice);
+            const rawWidth = resolvedImageStyles.width;
             const isPxUnit = Boolean(rawWidth && rawWidth.endsWith('px'));
             const widthValue = rawWidth ? parseInt(rawWidth, 10) : NaN;
-            const heightValue = data.styles?.height ? parseInt(data.styles.height, 10) : NaN;
+            const heightValue = resolvedImageStyles.height
+                ? parseInt(resolvedImageStyles.height, 10)
+                : NaN;
             return (
                 <ImgElement
                     key={data.id}
@@ -130,7 +138,7 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
                     heightPx={isPxUnit && !Number.isNaN(heightValue) ? heightValue : undefined}
                     onResizeWidth={(percent) =>
                         updateElement(data.id, {
-                            styles: { ...data.styles, width: `${percent}%` },
+                            styles: writeStyles(data.styles, activeDevice, { width: `${percent}%` }),
                         } as Partial<ElementSchema>)
                     }
                 />
