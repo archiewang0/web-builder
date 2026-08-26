@@ -64,13 +64,18 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
         ['data-component-id']: data.componentId,
         ['data-element-id']: data.id,
         ['selected-style']: classNames(
-            isSelected && 'relative z-10 ring-2 ring-blue-500',
-            // ring-dashed 不是真的存在的 Tailwind class（ring 是用 box-shadow 模擬，
-            // box-shadow 沒有虛線畫法），瀏覽器會直接忽略——改用背景色 + 實心 ring，
-            // 確保「放手後會塞進這個容器」跟「插在它前面/後面」視覺上明顯不同。
+            // 選取框跟拖曳插入提示原本用 Tailwind 的 ring（底層也是套用 box-shadow），
+            // 一旦元素自己也設了陰影（shadow-setting 面板寫進 styles.boxShadow，
+            // 以 inline style 套用），inline style 的 box-shadow 會直接蓋掉 ring 的
+            // box-shadow，選取框就悄悄消失。outline 是獨立的 CSS 屬性、不佔版面，
+            // 不會跟 box-shadow 搶同一個屬性，改用它就不受自訂陰影影響。
+            isSelected && !isPreviewMode && 'relative z-10 outline outline-2 outline-blue-500',
+            // outline-dashed 不是真的存在的 Tailwind class（outline 沒有虛線畫法可用
+            // 在這個情境下跟 ring 一樣的限制），瀏覽器會直接忽略——改用背景色 + 實心
+            // outline，確保「放手後會塞進這個容器」跟「插在它前面/後面」視覺上明顯不同。
             isDropTarget &&
                 dropPosition === 'inside' &&
-                'relative z-10 ring-2 ring-blue-400 bg-blue-50/60',
+                'relative z-10 outline outline-2 outline-blue-400 bg-blue-50/60',
             // before/after 是插入線：在 target 的上緣／下緣畫一條粗線，
             // 提示放手後會插在它的前面還是後面，而不是塞進它裡面。
             isDropTarget && dropPosition === 'before' && 'relative border-t-4 border-t-blue-500',

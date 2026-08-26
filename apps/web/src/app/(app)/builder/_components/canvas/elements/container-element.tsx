@@ -1,14 +1,8 @@
 import classNames from 'classnames';
 import { JSX, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { ElementSchema } from '@/lib/schema';
-
-const GRID_COLS: Record<number, string> = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-2',
-    3: 'grid-cols-3',
-    4: 'grid-cols-4',
-    5: 'grid-cols-5',
-};
+import { getContainerBaseClassName } from '@/lib/element-base-class';
+import { useCanvasFixedBounds } from '@/app/(app)/builder/_hooks/use-canvas-fixed-bounds';
 
 interface ContainerElementProps {
     id: string;
@@ -28,7 +22,18 @@ export function ContainerElement({
     isPreviewMode = false,
 }: ContainerElementProps) {
     const isFlexMode = columns === undefined;
-    const isFixed = (elementProperty.style as React.CSSProperties | undefined)?.position === 'fixed';
+    const isFixed =
+        (elementProperty.style as React.CSSProperties | undefined)?.position === 'fixed';
+
+    // 編輯／預覽畫布不是真正的瀏覽器視窗（有裝置外框、可能只佔部分寬度），
+    // 原生 position: fixed 的 top/left/width 沒辦法貼齊畫布，改用 JS 量測外框
+    // 目前的實際位置來定位，細節見 use-canvas-fixed-bounds.ts。
+    const bounds = useCanvasFixedBounds(isFixed);
+    const { style: schemaStyle, ...restElementProperty } = elementProperty;
+    const style: React.CSSProperties | undefined =
+        isFixed && bounds
+            ? { ...schemaStyle, top: bounds.top, left: bounds.left, width: bounds.width }
+            : schemaStyle;
 
     // fixed 元素會脫離文件排版，下方內容會被蓋住——這裡量測它實際渲染的高度，
     // 補一個同高的隱形佔位 div 把後面的內容往下推，行為對齊一般 fixed navbar
@@ -72,13 +77,14 @@ export function ContainerElement({
         <>
             <div
                 key={id}
-                {...elementProperty}
+                {...restElementProperty}
+                style={style}
                 ref={mergedRef}
                 className={classNames(
-                    'relative w-full pointer-events-auto rounded-lg transition-all',
-                    !isPreviewMode && ' p-3 border-2 border-dashed hover:shadow-md cursor-pointer',
-                    isFlexMode && 'flex flex-wrap gap-2',
-                    !isFlexMode && columns > 1 && `grid gap-2 ${GRID_COLS[columns] ?? 'grid-cols-2'}`,
+                    getContainerBaseClassName({ isFlexMode, columns }),
+                    'pointer-events-auto transition-all',
+                    !isPreviewMode &&
+                        ' p-3 border-2 border-dashed hover:shadow-md cursor-pointer rounded-lg',
                     !isPreviewMode && (elementProperty['selected-style'] || 'border-gray-200'),
                     !isPreviewMode && childrenElements?.length === 0 && 'h-16'
                 )}

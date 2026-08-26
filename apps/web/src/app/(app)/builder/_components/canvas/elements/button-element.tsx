@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import { BUTTON_BASE_CLASSNAME } from '@/lib/element-base-class';
 
 interface ButtonElementProps {
     id: string;
@@ -46,7 +47,8 @@ export function ButtonElement({
                 style={style}
                 onClick={handleClick}
                 className={classNames(
-                    ' pointer-events-auto cursor-pointer transition-all hover:opacity-50 rounded px-4 py-2',
+                    BUTTON_BASE_CLASSNAME,
+                    'pointer-events-auto cursor-pointer hover:opacity-50',
                     selectedStyle
                 )}
             >

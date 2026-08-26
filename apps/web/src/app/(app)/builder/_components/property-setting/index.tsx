@@ -7,6 +7,7 @@ import { ContentTextarea } from './content-textarea';
 import { ElementId } from './element-id';
 import { ComponentId } from './component-id';
 import { MarginSetting } from './margin-setting';
+import { PaddingSetting } from './padding-setting';
 import { BorderSetting } from './border-setting';
 import { ShadowSetting } from './shadow-setting';
 import { StyleChangeHandler } from '../../_types/property-setting-types';
@@ -49,7 +50,7 @@ export function PropertySetting() {
         <aside ref={panelRef} style={{ width }} className="relative shrink-0 overflow-hidden">
             {/* 內層固定 w-80（320px），對齊面板最左側，也就是把手、緊貼畫布那一側；
                 外層寬度縮小時只裁切內層，不會擠壓裡面的表單欄位 */}
-            <div className="absolute left-0 top-0 h-full w-80 bg-white border-l border-gray-200 shadow-sm overflow-y-auto">
+            <div className="absolute left-0 top-0 h-full w-80 bg-white border-l border-gray-200 shadow-sm overflow-y-auto pb-72">
                 <div className="p-4">
                     {/* Body 是固定的畫布根節點，只提供背景設定，沒有刪除/內容/字型等其他屬性可調。 */}
                     {isBodySelected ? (
@@ -152,6 +153,28 @@ export function PropertySetting() {
                                             })
                                         }
                                     />
+                                    {(elementType === ComponentIdEnums.container ||
+                                        elementType === ComponentIdEnums.text ||
+                                        elementType === ComponentIdEnums.button) && (
+                                        <PaddingSetting
+                                            paddingTop={localStyles.paddingTop}
+                                            paddingBottom={localStyles.paddingBottom}
+                                            paddingLeft={localStyles.paddingLeft}
+                                            paddingRight={localStyles.paddingRight}
+                                            onPaddingTopChange={handleStyleChange}
+                                            onPaddingBottomChange={handleStyleChange}
+                                            onPaddingLeftChange={handleStyleChange}
+                                            onPaddingRightChange={handleStyleChange}
+                                            onReset={() =>
+                                                handleStyleChange({
+                                                    paddingTop: '0px',
+                                                    paddingBottom: '0px',
+                                                    paddingLeft: '0px',
+                                                    paddingRight: '0px',
+                                                })
+                                            }
+                                        />
+                                    )}
                                     {elementType === ComponentIdEnums.container && (
                                         <LayoutSetting
                                             columns={containerColumns}

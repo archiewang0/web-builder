@@ -34,7 +34,7 @@ export function MarginSetting({
     );
 
     return (
-        <CollapsibleSection title="間距設定" headerExtra={resetButton}>
+        <CollapsibleSection title="邊距設定" headerExtra={resetButton}>
             <div className="p-2 border border-gray-200 rounded-lg">
                 <div className="grid grid-cols-2 gap-2">
                     <MarginTopOption marginTop={marginTop} onMarginTopChange={onMarginTopChange} />

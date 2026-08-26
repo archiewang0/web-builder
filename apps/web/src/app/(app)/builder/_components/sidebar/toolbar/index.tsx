@@ -4,7 +4,7 @@ import { usePageTitleStore } from '@/store/use-page-title-store';
 import { usePageVisibilityStore } from '@/store/use-page-visibility-store';
 import { DeviceSwitcher } from './device-switcher';
 import { SaveButton } from './save-button';
-import { useSavePage } from './use-save-page';
+import { useSavePage } from '../use-save-page';
 
 // 裝置切換／預覽／儲存：builder 專屬功能，常駐工具列。
 // /builder 整條路由已經由 middleware 做登入檢查，這裡不用再擋一次。

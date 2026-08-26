@@ -65,24 +65,23 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                     裝置外框在非桌面寬度時是用 justify-content: center 置中在裡面的，
                     跟這層自己的左邊界不是同一個位置，fixed 元素的 left:0 會對齊到
                     這層的左邊界，比置中後的裝置外框更靠左，兩者就對不齊。 */}
-                <div className={classNames('flex-1 overflow-y-auto', !isPreviewMode && 'p-6')}>
+
+                <div
+                    id="device-wrapper"
+                    className={classNames('flex-1 overflow-y-auto', !isPreviewMode && 'p-6')}
+                >
                     <div
-                        className="h-full bg-white shadow-xl rounded-lg transition-all duration-300"
+                        id="device-frame"
+                        className="h-full bg-white shadow-xl rounded-lg transition-all duration-300 m-auto overflow-hidden"
                         style={{
                             width: DEVICES.find((d) => d.id === activeDevice)?.width,
                             maxWidth: '100%',
-
-                            // CSS trick 為了內部的 fixed 元件, 可以對ftansform 的parent 進行定位, 以及寬度比例符合
-                            // 但 previewmode 就不需要了
-                            transform: isPreviewMode ? undefined : 'translateZ(0)',
                         }}
                     >
                         <div
                             ref={setBodyDropRef}
                             id="canvas"
                             className={classNames(
-                                !isPreviewMode && 'z-0',
-                                !isPreviewMode && 'p-5',
                                 // 不能加 padding——Body 自己是 fixed navbar 的祖先，只要
                                 // Body 跟裝置外框（containing block）之間有任何 padding，
                                 // position: fixed 的子孫就會直接無視它、緊貼裝置外框對齊，
@@ -91,8 +90,7 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                                 // （site/[id]/render-schema.tsx）本來就沒有這個 padding，
                                 // 這裡拿掉才能讓編輯模式的排版基準跟正式站台一致。
                                 !isPreviewMode &&
-                                    'gap-10 flex flex-col relative rounded-lg min-h-[600px]',
-                                !isPreviewMode && 'border-2 border-dashed border-gray-300'
+                                    'gap-10 flex flex-col relative rounded-lg min-h-[600px] border-2 border-dashed border-gray-300 p-5 z-0 '
                             )}
                             style={schema.body?.styles as React.CSSProperties}
                             // 點在畫布空白處（沒有點到任何 schema 元素，那些元素自己的 onClick

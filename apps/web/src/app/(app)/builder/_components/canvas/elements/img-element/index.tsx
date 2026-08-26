@@ -4,12 +4,14 @@ import { useCallback } from 'react';
 import classNames from 'classnames';
 import { Image as ImageIcon } from 'lucide-react';
 import { useImageResize } from './use-image-resize';
+import { IMAGE_BASE_CLASSNAME } from '@/lib/element-base-class';
 import {
     PLACEHOLDER_IMG_WIDTH_PX,
     PLACEHOLDER_IMG_HEIGHT_PX,
     PLACEHOLDER_IMG_MAX_WIDTH_PERCENT,
     PLACEHOLDER_IMG_MIN_WIDTH_PERCENT,
 } from '@/app/(app)/builder/_const/img';
+import { useHeaderStore } from '@/store/use-header-store';
 
 interface ImgElementProps {
     id: string;
@@ -40,6 +42,8 @@ export function ImgElement({
         widthPercent,
         onResizeWidth,
     });
+
+    const isPreviewMode = useHeaderStore((state) => state.isPreviewMode);
 
     // elementProperty.ref 是 dnd-kit 的 setNodeRef（穩定的 callback），這裡還需要
     // 自己的 wrapperRef 量測尺寸做縮放，兩個 ref 要一起呼叫——合併函式本身也要用
@@ -101,8 +105,10 @@ export function ImgElement({
                         borderRadius: style?.borderRadius,
                     }}
                     className={classNames(
-                        'pointer-events-auto rounded',
-                        isPxMode && 'object-cover'
+                        IMAGE_BASE_CLASSNAME,
+                        'pointer-events-auto',
+                        'object-cover'
+                        // isPxMode && 'object-cover'
                     )}
                 />
             ) : (
@@ -117,7 +123,8 @@ export function ImgElement({
 
             {/* image resize bar：px 模式的寬高由屬性面板輸入框直接控制，
                 拖曳把手是針對「相對父層百分比」設計的，px 模式下不適用，先隱藏 */}
-            {!isPxMode && (
+
+            {!isPreviewMode && !isPxMode && (
                 <>
                     <div
                         draggable={false}

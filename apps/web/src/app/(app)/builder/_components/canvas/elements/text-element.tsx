@@ -3,6 +3,7 @@
 import classNames from 'classnames';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import { useDebouncedCallback } from '@/app/(app)/builder/_hooks/use-debounce';
+import { TEXT_BASE_CLASSNAME } from '@/lib/element-base-class';
 
 interface TextElementProps {
     id: string;
@@ -90,7 +91,8 @@ export function TextElement({
             onInput={isSelected ? handleInput : undefined}
             onBlur={isSelected ? handleBlur : undefined}
             className={classNames(
-                'pointer-events-auto cursor-pointer p-2 rounded transition-all outline-none whitespace-pre-wrap',
+                TEXT_BASE_CLASSNAME,
+                'pointer-events-auto cursor-pointer transition-all outline-none',
                 elementProperty['selected-style']
             )}
         />

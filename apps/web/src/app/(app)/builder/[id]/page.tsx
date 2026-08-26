@@ -7,7 +7,7 @@ import { Sidebar } from '../_components/sidebar';
 import { PaletteItemPreview } from '../_components/sidebar/component-palette';
 import { Canvas } from '../_components/canvas';
 import { PropertySetting } from '../_components/property-setting';
-import { PreviewFloatingControls } from '../_components/sidebar/preview-floating-controls';
+import { PreviewFloatingControls } from '../_components/sidebar/toolbar/preview-floating-controls';
 import { usePageLoader } from './use-page-loader';
 import { useCanvasDnd, pointerWithinOrNearest } from '@/app/(app)/builder/_hooks/use-canvas-dnd';
 import { useEventLogger } from '../_components/canvas/event-log/use-event-logger';
