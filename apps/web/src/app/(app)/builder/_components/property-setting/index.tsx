@@ -1,11 +1,11 @@
 import classNames from 'classnames';
 import { useResizablePanel } from '@/app/(app)/builder/_hooks/use-resizable-panel';
-import { ComponentIdEnums, PresetIdEnums } from '@/lib/schema';
+import { ElementTypeEnums, PresetIdEnums } from '@/lib/schema';
 import { SelectedNone } from './selected-none';
 import { EditSchemaConstructor } from './edit-schema';
 import { ContentTextarea } from './content-textarea';
 import { ElementId } from './element-id';
-import { ComponentId } from './component-id';
+import { ElementType } from './element-type';
 import { MarginSetting } from './margin-setting';
 import { PaddingSetting } from './padding-setting';
 import { BorderSetting } from './border-setting';
@@ -70,9 +70,9 @@ export function PropertySetting() {
                             {element ? (
                                 <div className="space-y-6">
                                     <ElementId id={element.id} />
-                                    <ComponentId componentId={element.componentId} />
-                                    {elementType !== ComponentIdEnums.container &&
-                                        elementType !== ComponentIdEnums.image &&
+                                    <ElementType elementType={element.elementType} />
+                                    {elementType !== ElementTypeEnums.container &&
+                                        elementType !== ElementTypeEnums.image &&
                                         'content' in element && (
                                             <ContentTextarea
                                                 context={localContent}
@@ -80,7 +80,7 @@ export function PropertySetting() {
                                             />
                                         )}
 
-                                    {elementType === ComponentIdEnums.button && (
+                                    {elementType === ElementTypeEnums.button && (
                                         <ButtonLinkSetting
                                             elementId={element.id}
                                             href={localHref}
@@ -88,8 +88,8 @@ export function PropertySetting() {
                                         />
                                     )}
 
-                                    {(elementType === ComponentIdEnums.text ||
-                                        elementType === ComponentIdEnums.button) && (
+                                    {(elementType === ElementTypeEnums.text ||
+                                        elementType === ElementTypeEnums.button) && (
                                         <>
                                             <FontSetting
                                                 fontSize={localStyles.fontSize}
@@ -112,7 +112,7 @@ export function PropertySetting() {
                                         </>
                                     )}
 
-                                    {elementType === ComponentIdEnums.image && (
+                                    {elementType === ElementTypeEnums.image && (
                                         <>
                                             <ImageSetting
                                                 content={localContent}
@@ -124,9 +124,9 @@ export function PropertySetting() {
                                         </>
                                     )}
 
-                                    {(elementType === ComponentIdEnums.container ||
-                                        elementType === ComponentIdEnums.text ||
-                                        elementType === ComponentIdEnums.button) && (
+                                    {(elementType === ElementTypeEnums.container ||
+                                        elementType === ElementTypeEnums.text ||
+                                        elementType === ElementTypeEnums.button) && (
                                         <BackgroundSetting
                                             backgroundColor={localStyles.backgroundColor}
                                             backgroundImage={localStyles.backgroundImage}
@@ -153,9 +153,9 @@ export function PropertySetting() {
                                             })
                                         }
                                     />
-                                    {(elementType === ComponentIdEnums.container ||
-                                        elementType === ComponentIdEnums.text ||
-                                        elementType === ComponentIdEnums.button) && (
+                                    {(elementType === ElementTypeEnums.container ||
+                                        elementType === ElementTypeEnums.text ||
+                                        elementType === ElementTypeEnums.button) && (
                                         <PaddingSetting
                                             paddingTop={localStyles.paddingTop}
                                             paddingBottom={localStyles.paddingBottom}
@@ -175,7 +175,7 @@ export function PropertySetting() {
                                             }
                                         />
                                     )}
-                                    {elementType === ComponentIdEnums.container && (
+                                    {elementType === ElementTypeEnums.container && (
                                         <LayoutSetting
                                             columns={containerColumns}
                                             onColumnsChange={handleColumnsChange}
@@ -183,7 +183,7 @@ export function PropertySetting() {
                                             onJustifyContentChange={handleFlexAlignChange}
                                         />
                                     )}
-                                    {elementType === ComponentIdEnums.container &&
+                                    {elementType === ElementTypeEnums.container &&
                                         'variant' in element &&
                                         element.variant === PresetIdEnums.navbar && (
                                             <NavbarPositionSetting

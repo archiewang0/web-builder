@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSchemaStore } from '@/store/use-schema-store';
 import {
-    ComponentIdEnums,
+    ElementTypeEnums,
     ElementSchema,
     ContainerElementSchema,
     StylesSchema,
@@ -166,9 +166,9 @@ export function usePropertySetting() {
     };
 
     const elementType = isBodySelected
-        ? ComponentIdEnums.body
+        ? ElementTypeEnums.body
         : element
-          ? ComponentIdEnums[element.componentId]
+          ? ElementTypeEnums[element.elementType]
           : null;
     const containerColumns =
         element && 'columns' in element ? (element as ContainerElementSchema).columns : undefined;

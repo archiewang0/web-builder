@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import {
-    ComponentIdEnums,
+    ElementTypeEnums,
     ElementSchema,
     ContainerElementSchema,
     StylesSchema,
@@ -94,7 +94,7 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
     addElement: (element, parentId) => {
         if (parentId) {
             const parentNode = get().elementMap.get(parentId);
-            if (!parentNode || parentNode.element.componentId !== ComponentIdEnums.container) {
+            if (!parentNode || parentNode.element.elementType !== ElementTypeEnums.container) {
                 return;
             }
 

@@ -41,7 +41,7 @@ function PaletteItem({ component }: { component: Component }) {
     // 要組出單一元素還是一整棵樣板樹——這裡決定要標成哪一種 drag data。
     const dragData = isPresetId(component.id)
         ? ({ type: 'new-preset' as const, presetId: component.id } as const)
-        : ({ type: 'new-component' as const, componentId: component.id } as const);
+        : ({ type: 'new-component' as const, elementType: component.id } as const);
 
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: `palette:${component.id}`,

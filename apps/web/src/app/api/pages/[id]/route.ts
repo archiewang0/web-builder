@@ -101,7 +101,7 @@ async function deleteOrphanedBlobs(
 
     // 清理孤兒檔案是「順手做」，不是存檔成功的必要條件——失敗就算了，不能讓存檔跟著報錯。
     try {
-        await del(orphaned);
+        await del(orphaned, { token: process.env.WEB_BUILDER_READ_WRITE_TOKEN });
     } catch {
         // best-effort cleanup
     }
@@ -127,7 +127,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     const pathnames = collectBlobPathnames(page.schema, page.thumbnailPath);
     if (pathnames.length > 0) {
         try {
-            await del(pathnames);
+            await del(pathnames, { token: process.env.WEB_BUILDER_READ_WRITE_TOKEN });
         } catch {
             // best-effort cleanup
         }

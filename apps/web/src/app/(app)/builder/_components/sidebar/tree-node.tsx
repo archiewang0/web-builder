@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ComponentIdEnums, ElementSchema } from '@/lib/schema';
+import { ElementTypeEnums, ElementSchema } from '@/lib/schema';
 import {
     ChevronDown,
     ChevronRight,
@@ -19,15 +19,15 @@ interface TreeNodeProps {
 }
 
 // 根據元素類型獲取對應圖標
-function getElementIcon(componentId: ComponentIdEnums) {
-    switch (componentId) {
-        case ComponentIdEnums.text:
+function getElementIcon(elementType: ElementTypeEnums) {
+    switch (elementType) {
+        case ElementTypeEnums.text:
             return Type;
-        case ComponentIdEnums.image:
+        case ElementTypeEnums.image:
             return Image;
-        case ComponentIdEnums.button:
+        case ElementTypeEnums.button:
             return MousePointer2;
-        case ComponentIdEnums.container:
+        case ElementTypeEnums.container:
             return Layers;
         default:
             return Square;
@@ -36,14 +36,14 @@ function getElementIcon(componentId: ComponentIdEnums) {
 
 // 根據元素類型獲取顯示名稱
 function getElementName(element: ElementSchema): string {
-    switch (element.componentId) {
-        case ComponentIdEnums.text:
+    switch (element.elementType) {
+        case ElementTypeEnums.text:
             return '文字';
-        case ComponentIdEnums.image:
+        case ElementTypeEnums.image:
             return '圖片';
-        case ComponentIdEnums.button:
+        case ElementTypeEnums.button:
             return '按鈕';
-        case ComponentIdEnums.container:
+        case ElementTypeEnums.container:
             return '容器';
         default:
             return '元素';
@@ -58,9 +58,9 @@ export function TreeNode({ element, depth, expandSignal }: TreeNodeProps) {
     useEffect(() => {
         if (expandSignal != null) setIsExpanded(expandSignal.expand);
     }, [expandSignal]);
-    const Icon = getElementIcon(element.componentId);
+    const Icon = getElementIcon(element.elementType);
     const hasChildren =
-        element.componentId === ComponentIdEnums.container &&
+        element.elementType === ElementTypeEnums.container &&
         'children' in element &&
         element.children.length > 0;
     const isSelected = selectedElement === element.id;

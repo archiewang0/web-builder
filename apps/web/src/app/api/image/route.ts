@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Missing pathname' }, { status: 400 });
     }
 
-    const result = await get(pathname, { access: 'private' });
+    const result = await get(pathname, {
+        access: 'private',
+        token: process.env.WEB_BUILDER_READ_WRITE_TOKEN,
+    });
     if (result === null || result.stream === null) {
         return new NextResponse('Not found', { status: 404 });
     }

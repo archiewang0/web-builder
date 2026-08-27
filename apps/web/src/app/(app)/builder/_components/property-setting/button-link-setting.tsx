@@ -71,8 +71,8 @@ export function ButtonLinkSetting({ elementId, href, onChange }: ButtonLinkSetti
                     {targets.map((node) => {
                         const label =
                             'content' in node.element && node.element.content
-                                ? `${node.element.componentId}：${node.element.content.slice(0, 12)}`
-                                : `${node.element.componentId}（${node.element.id}）`;
+                                ? `${node.element.elementType}：${node.element.content.slice(0, 12)}`
+                                : `${node.element.elementType}（${node.element.id}）`;
                         return (
                             <option key={node.element.id} value={node.element.id}>
                                 {label}

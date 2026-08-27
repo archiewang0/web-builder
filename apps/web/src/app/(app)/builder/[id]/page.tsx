@@ -37,7 +37,7 @@ export default function WebBuilderPage() {
     // 之後放入 dragoverlay
     const activeDragComponent =
         activeDragData?.type === 'new-component'
-            ? components.find((component) => component.id === activeDragData.componentId)
+            ? components.find((component) => component.id === activeDragData.elementType)
             : activeDragData?.type === 'new-preset'
               ? components.find((component) => component.id === activeDragData.presetId)
               : undefined;

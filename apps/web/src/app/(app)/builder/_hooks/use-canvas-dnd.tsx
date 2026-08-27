@@ -10,7 +10,7 @@ import type {
 import { useSchemaStore } from '@/store/use-schema-store';
 import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import {
-    ComponentIdEnums,
+    ElementTypeEnums,
     PresetIdEnums,
     ElementSchema,
     ContainerElementSchema,
@@ -91,7 +91,7 @@ export const pointerWithinOrNearest: CollisionDetection = (args) => {
 // 就能分辨這次拖曳是「sidebar 新元件」還是「既有元素」，不用再猜事件是被誰攔截的。
 export interface NewComponentDragData {
     type: 'new-component';
-    componentId: ComponentIdEnums;
+    elementType: ElementTypeEnums;
 }
 // 樣板（例如 navbar）拖到畫布上，放手後展開成一整棵既有組件組成的樹，
 // 跟 NewComponentDragData 分開是因為放手時要呼叫的 factory 不一樣
@@ -255,7 +255,7 @@ export function useCanvasDnd(logEvent: LogEvent) {
             // 它，讓使用者知道要調整的是這一個，而不是又生一個帶預設值的新的。
             const existingNavbar = Array.from(elementMap.values()).find(
                 (node) =>
-                    node.element.componentId === ComponentIdEnums.container &&
+                    node.element.elementType === ElementTypeEnums.container &&
                     node.element.variant === data.presetId
             )?.element;
             if (existingNavbar) {
@@ -272,7 +272,7 @@ export function useCanvasDnd(logEvent: LogEvent) {
 
         if (data?.type === 'new-component') {
             const newElement = createElement(
-                data.componentId,
+                data.elementType,
                 { x: 0, y: 0 },
                 schema.elements.length
             );

@@ -1,4 +1,4 @@
-import { ComponentIdEnums, ContainerElementSchema, ElementSchema } from './schema';
+import { ElementTypeEnums, ContainerElementSchema, ElementSchema } from './schema';
 
 // Map 索引節點
 export interface ElementMapNode {
@@ -172,7 +172,7 @@ export function buildElementMap(
             });
 
             // 如果是 Container，遞歸處理子元素
-            if (element.componentId === ComponentIdEnums.container) {
+            if (element.elementType === ElementTypeEnums.container) {
                 const containerElement = element as ContainerElementSchema;
                 traverse(containerElement.children, containerElement, elementPath, depth + 1);
             }
@@ -189,5 +189,5 @@ export function buildElementMap(
 // 放手那一刻 (insertElement/computeReorder) 都要用同一份依據判斷，才不會兩邊各自
 // 維護一套「target 是不是 container」的邏輯、算出不一致的結果。
 export function isContainerElement(elementMap: Map<string, ElementMapNode>, id: string): boolean {
-    return elementMap.get(id)?.element.componentId === ComponentIdEnums.container;
+    return elementMap.get(id)?.element.elementType === ElementTypeEnums.container;
 }

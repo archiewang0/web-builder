@@ -19,7 +19,7 @@ export async function DELETE() {
     ];
     if (pathnames.length > 0) {
         try {
-            await del(pathnames);
+            await del(pathnames, { token: process.env.WEB_BUILDER_READ_WRITE_TOKEN });
         } catch {
             // best-effort cleanup
         }

@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { ComponentIdEnums, type ElementSchema, type StylesSchema } from '@/lib/schema';
+import { ElementTypeEnums, type ElementSchema, type StylesSchema } from '@/lib/schema';
 import { DeviceIdEnums } from '@/components/header/devices';
 import { buildResponsiveCss, resolveStyles } from '@/lib/responsive-styles';
 import {
@@ -73,15 +73,15 @@ function RenderSchemaElement({
     // 每個元素的最外層節點都掛上 id={element.id}——這樣按鈕的「捲動至元素」
     // 連結（href="#elementId"）才有實際的錨點可以跳，瀏覽器原生錨點導覽
     // 本身就會處理捲動，不用自己寫 scrollIntoView。
-    switch (element.componentId) {
-        case ComponentIdEnums.text:
+    switch (element.elementType) {
+        case ElementTypeEnums.text:
             return (
                 <div id={id} style={style} className={TEXT_BASE_CLASSNAME}>
                     {element.content || '預設文字'}
                 </div>
             );
 
-        case ComponentIdEnums.image:
+        case ElementTypeEnums.image:
             // 沒設圖片時不能整個回傳 null——這個節點還是佔著版面上的一格
             // （grid 欄位、flex 排版旁邊的元素），直接消失會讓旁邊的元素跟著
             // 移位、grid 欄數對不起來。至少渲染一個套用相同 styles（含寬高）
@@ -99,7 +99,7 @@ function RenderSchemaElement({
                 <div id={id} style={style} className={IMAGE_BASE_CLASSNAME} />
             );
 
-        case ComponentIdEnums.button: {
+        case ElementTypeEnums.button: {
             const buttonClassName = classNames(BUTTON_BASE_CLASSNAME, 'shadow-md hover:opacity-80');
             const href = element.href;
 
@@ -128,7 +128,7 @@ function RenderSchemaElement({
             );
         }
 
-        case ComponentIdEnums.container: {
+        case ElementTypeEnums.container: {
             const isFlexMode = element.columns === undefined;
             const containerClassName = classNames(
                 getContainerBaseClassName({ isFlexMode, columns: element.columns }),

@@ -7,7 +7,7 @@ import React from 'react';
 import { useSchemaStore } from '@/store/use-schema-store';
 import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { useHeaderStore } from '@/store/use-header-store';
-import { ComponentIdEnums, ElementSchema } from '@/lib/schema';
+import { ElementTypeEnums, ElementSchema } from '@/lib/schema';
 import { resolveStyles, writeStyles } from '@/lib/responsive-styles';
 import { ButtonElement, ContainerElement, ImgElement, TextElement } from './elements';
 import type { DropPosition } from '@/lib/schema-tree';
@@ -46,7 +46,7 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
     });
     const { setNodeRef: setDropRef } = useDroppable({
         id: data.id,
-        data: { componentId: data.componentId },
+        data: { elementType: data.elementType },
     });
 
     // dnd-kit 自己的 setDragRef/setDropRef 是穩定的（内部用 useCallback([]) 包住），
@@ -64,7 +64,7 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
     const isDropTarget = data.id === overId && data.id !== activeId;
 
     const elementProperty = {
-        ['data-component-id']: data.componentId,
+        ['data-element-type']: data.elementType,
         ['data-element-id']: data.id,
         ['selected-style']: classNames(
             // 選取框跟拖曳插入提示原本用 Tailwind 的 ring（底層也是套用 box-shadow），
@@ -99,8 +99,8 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
     };
 
     // 根據元件類型渲染
-    switch (data.componentId) {
-        case ComponentIdEnums.text:
+    switch (data.elementType) {
+        case ElementTypeEnums.text:
             return (
                 <TextElement
                     key={data.id}
@@ -114,7 +114,7 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
                 />
             );
 
-        case ComponentIdEnums.image: {
+        case ElementTypeEnums.image: {
             // 單位（% or px）跟寬高都要看「目前 activeDevice 解析後」的值——
             // 使用者可能只在某個裝置覆寫過寬度，直接讀 data.styles.width（現在是
             // 巢狀結構，且不一定是目前裝置那一層）會拿到錯的值，跟
@@ -145,7 +145,7 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
             );
         }
 
-        case ComponentIdEnums.button:
+        case ElementTypeEnums.button:
             return (
                 <ButtonElement
                     key={data.id}
@@ -157,7 +157,7 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
                 />
             );
 
-        case ComponentIdEnums.container:
+        case ElementTypeEnums.container:
             return (
                 <ContainerElement
                     key={data.id}

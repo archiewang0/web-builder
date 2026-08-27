@@ -2,7 +2,7 @@
 // 因為這些型別被 store 以外的地方共用（server 端 db/queries、db/schema，以及
 // app/site/[id] 公開展示頁的 renderer），不是 builder 或 zustand store 的私有實作細節。
 
-export enum ComponentIdEnums {
+export enum ElementTypeEnums {
     text = 'text',
     image = 'image',
     button = 'button',
@@ -10,11 +10,11 @@ export enum ComponentIdEnums {
     body = 'body',
 }
 
-// 「樣板」跟「組件」是兩回事：組件（ComponentIdEnums）是 schema 裡真的會存在
-// 某個元素節點上的 componentId；樣板只是 sidebar 拖曳的入口，放開滑鼠後展開成
+// 「樣板」跟「組件」是兩回事：組件（ElementTypeEnums）是 schema 裡真的會存在
+// 某個元素節點上的 elementType；樣板只是 sidebar 拖曳的入口，放開滑鼠後展開成
 // 一整棵由既有組件（container/image/button...）組成的樹，插入 schema 的東西
-// 都是貨真價實的既有組件，不會有任何節點的 componentId 是這裡的值。
-// 用獨立的 enum、不跟 ComponentIdEnums 混在一起，就不用讓 schema 那邊一堆
+// 都是貨真價實的既有組件，不會有任何節點的 elementType 是這裡的值。
+// 用獨立的 enum、不跟 ElementTypeEnums 混在一起，就不用讓 schema 那邊一堆
 // switch/型別聯集為了一個「其實不會真的存在於 schema 裡」的值多開分支。
 export enum PresetIdEnums {
     navbar = 'preset-navbar',
@@ -59,7 +59,7 @@ export interface StylesSchema {
 // 基礎元素屬性（所有元素共用）
 interface BaseElementSchema {
     id: string;
-    componentId: ComponentIdEnums;
+    elementType: ElementTypeEnums;
     order: number;
     position: {
         x: number;
@@ -72,7 +72,7 @@ interface BaseElementSchema {
 
 // 非 Container 元素（文字、圖片、按鈕）
 export interface LeafElementSchema extends BaseElementSchema {
-    componentId: ComponentIdEnums.text | ComponentIdEnums.image | ComponentIdEnums.button;
+    elementType: ElementTypeEnums.text | ElementTypeEnums.image | ElementTypeEnums.button;
     content?: string;
     // 目前只有 button 會用到。單一欄位同時表達兩種連結模式，用值本身的格式分流，
     // 不用另外存一個 linkType 欄位：'#' 開頭 = 捲動到 id 等於後面那段字串的元素，
@@ -82,7 +82,7 @@ export interface LeafElementSchema extends BaseElementSchema {
 
 // Container 元素（可包含子元素）
 export interface ContainerElementSchema extends BaseElementSchema {
-    componentId: ComponentIdEnums.container;
+    elementType: ElementTypeEnums.container;
     // undefined = flex 版面（由 justifyContent 控制對齊）；number = grid 版面（欄數），兩者互斥
     columns?: number;
     children: ElementSchema[];
