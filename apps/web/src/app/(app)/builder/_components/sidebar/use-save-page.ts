@@ -9,7 +9,7 @@ import { usePageTitleStore } from '@/store/use-page-title-store';
 import { usePageVisibilityStore } from '@/store/use-page-visibility-store';
 import { collectBlobUrls, replaceBlobUrls } from '@/app/(app)/builder/_libs/resolve-pending-images';
 import { validatePageTitle } from '@/lib/validate-page-title';
-import { captureScreenshot } from '@/app/(app)/builder/_libs/capture-screenshot';
+import { captureDesktopScreenshot } from '@/app/(app)/builder/_libs/capture-desktop-screenshot';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -66,19 +66,18 @@ export function useSavePage() {
             const resolvedSchema = urlMap.size > 0 ? replaceBlobUrls(schema, urlMap) : schema;
 
             // 截圖失敗不該讓整個存檔失敗——拿不到縮圖就不帶 thumbnailPath，
-            // 後端會保留舊縮圖不動（見 upsertPageSchema）。
+            // 後端會保留舊縮圖不動（見 upsertPageSchema）。縮圖一律拍桌面版畫面，
+            // 用畫面外離屏渲染（見 capture-desktop-screenshot.tsx），不會動到
+            // 使用者正在編輯/預覽的裝置模式，也就不會有切裝置的畫面閃動。
             let thumbnailPath: string | undefined;
             try {
-                const canvasNode = document.getElementById('canvas');
-                if (canvasNode) {
-                    const screenshot = await captureScreenshot(canvasNode);
-                    const blob = await upload(`screenshots/${params.id}.jpg`, screenshot, {
-                        access: 'private',
-                        handleUploadUrl: '/api/upload',
-                        contentType: 'image/jpeg',
-                    });
-                    thumbnailPath = blob.pathname;
-                }
+                const screenshot = await captureDesktopScreenshot(resolvedSchema);
+                const blob = await upload(`screenshots/${params.id}.jpg`, screenshot, {
+                    access: 'private',
+                    handleUploadUrl: '/api/upload',
+                    contentType: 'image/jpeg',
+                });
+                thumbnailPath = blob.pathname;
             } catch {
                 thumbnailPath = undefined;
             }

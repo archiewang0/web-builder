@@ -73,7 +73,7 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                 >
                     <div
                         id="device-frame"
-                        className="h-full bg-white shadow-xl rounded-lg transition-all duration-300 m-auto overflow-hidden"
+                        className=" bg-white shadow-xl rounded-lg transition-all duration-300 m-auto overflow-hidden"
                         style={{
                             width: DEVICES.find((d) => d.id === activeDevice)?.width,
                             maxWidth: '100%',
@@ -93,7 +93,12 @@ export function Canvas({ isPreviewMode = false, dragState }: CanvasProps) {
                                 !isPreviewMode &&
                                     'gap-10 flex flex-col relative rounded-lg min-h-[600px] border-2 border-dashed border-gray-300 p-5 z-0 '
                             )}
-                            style={resolveStyles(schema.body?.styles, activeDevice) as React.CSSProperties}
+                            style={
+                                resolveStyles(
+                                    schema.body?.styles,
+                                    activeDevice
+                                ) as React.CSSProperties
+                            }
                             // 點在畫布空白處（沒有點到任何 schema 元素，那些元素自己的 onClick
                             // 會先 stopPropagation）代表點到的是 Body 本身，選取 Body 而不是
                             // 讓事件繼續冒泡到 <main> 把選取清空。
