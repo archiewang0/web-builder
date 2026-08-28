@@ -17,6 +17,7 @@ import { BackgroundSetting } from './background-setting';
 import { ImageSetting } from './image-setting';
 import { ButtonLinkSetting } from './button-link-setting';
 import { NavbarPositionSetting } from './navbar-position-setting';
+import { VisibilitySetting } from './visibility-setting';
 import { usePropertySetting } from './use-property-setting';
 
 export type { StyleChangeHandler };
@@ -30,6 +31,7 @@ export function PropertySetting() {
         localContent,
         localStyles,
         localHref,
+        activeDevice,
         handleDelete,
         handleContentChange,
         handleContentValueChange,
@@ -37,6 +39,7 @@ export function PropertySetting() {
         handleHrefChange,
         handleColumnsChange,
         handleFlexAlignChange,
+        handleVisibilityChange,
     } = usePropertySetting();
     // edge: 'right' 跟 Sidebar 鏡像——面板貼在螢幕右側，把手在左邊（緊貼畫布那一側）。
     // maxWidth 320 對應原本寫死的 w-80。
@@ -71,6 +74,11 @@ export function PropertySetting() {
                                 <div className="space-y-6">
                                     <ElementId id={element.id} />
                                     <ElementType elementType={element.elementType} />
+                                    <VisibilitySetting
+                                        display={localStyles.display}
+                                        activeDevice={activeDevice}
+                                        onChange={handleVisibilityChange}
+                                    />
                                     {elementType !== ElementTypeEnums.container &&
                                         elementType !== ElementTypeEnums.image &&
                                         'content' in element && (
@@ -89,7 +97,8 @@ export function PropertySetting() {
                                     )}
 
                                     {(elementType === ElementTypeEnums.text ||
-                                        elementType === ElementTypeEnums.button) && (
+                                        elementType === ElementTypeEnums.button ||
+                                        elementType === ElementTypeEnums.dropdownMenu) && (
                                         <>
                                             <FontSetting
                                                 fontSize={localStyles.fontSize}
@@ -126,7 +135,8 @@ export function PropertySetting() {
 
                                     {(elementType === ElementTypeEnums.container ||
                                         elementType === ElementTypeEnums.text ||
-                                        elementType === ElementTypeEnums.button) && (
+                                        elementType === ElementTypeEnums.button ||
+                                        elementType === ElementTypeEnums.dropdownMenu) && (
                                         <BackgroundSetting
                                             backgroundColor={localStyles.backgroundColor}
                                             backgroundImage={localStyles.backgroundImage}
@@ -155,7 +165,8 @@ export function PropertySetting() {
                                     />
                                     {(elementType === ElementTypeEnums.container ||
                                         elementType === ElementTypeEnums.text ||
-                                        elementType === ElementTypeEnums.button) && (
+                                        elementType === ElementTypeEnums.button ||
+                                        elementType === ElementTypeEnums.dropdownMenu) && (
                                         <PaddingSetting
                                             paddingTop={localStyles.paddingTop}
                                             paddingBottom={localStyles.paddingBottom}

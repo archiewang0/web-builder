@@ -1,4 +1,4 @@
-import { Image, Layout, PanelTop, Square, Type } from 'lucide-react';
+import { ChevronDown, Image, Layout, PanelTop, Square, Type } from 'lucide-react';
 import { ElementTypeEnums, PresetIdEnums } from '@/lib/schema';
 
 // 樣板（PresetIdEnums）跟一般組件（ElementTypeEnums）在 sidebar 上長得一樣、
@@ -21,6 +21,7 @@ export function useSidebar() {
         { id: ElementTypeEnums.image, name: '圖片', icon: Image, category: '基礎' },
         { id: ElementTypeEnums.button, name: '按鈕', icon: Square, category: '基礎' },
         { id: ElementTypeEnums.container, name: '容器', icon: Layout, category: '佈局' },
+        { id: ElementTypeEnums.dropdownMenu, name: '下拉選單', icon: ChevronDown, category: '佈局' },
         { id: PresetIdEnums.navbar, name: '導覽列', icon: PanelTop, category: '版面樣板' },
     ];
 

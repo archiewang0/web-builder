@@ -20,6 +20,18 @@ module.exports = {
           800: "#1e40af",
           900: "#1e3a8a",
         },
+        // 對應 globals.css 的 shadcn-lite CSS variables，目前只給
+        // components/ui/dropdown-menu.tsx 用，不是完整的 shadcn 色票。
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        border: "hsl(var(--border))",
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        ring: "hsl(var(--ring))",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],

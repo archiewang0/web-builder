@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import { ChevronDown } from 'lucide-react';
 import { ElementTypeEnums, type ElementSchema, type StylesSchema } from '@/lib/schema';
 import { DeviceIdEnums } from '@/components/header/devices';
 import { buildResponsiveCss, resolveStyles } from '@/lib/responsive-styles';
@@ -8,6 +9,7 @@ import {
     TEXT_BASE_CLASSNAME,
     getContainerBaseClassName,
 } from '@/lib/element-base-class';
+import { DropdownMenuWidget } from './dropdown-menu-widget';
 
 // page.tsx 的 Body 背景層外面那個 <div> 要用這個 id，buildResponsiveCss
 // 產生的 @media 規則才選得到它。
@@ -167,6 +169,24 @@ function RenderSchemaElement({
                         <RenderSchemaElements elements={element.children} assignIds={assignIds} />
                     </div>
                 </>
+            );
+        }
+
+        case ElementTypeEnums.dropdownMenu: {
+            const buttonClassName = classNames(
+                BUTTON_BASE_CLASSNAME,
+                'inline-flex items-center gap-1 shadow-md hover:opacity-80'
+            );
+            return (
+                <DropdownMenuWidget
+                    trigger={
+                        <button id={id} style={style} className={buttonClassName}>
+                            {element.content || '選單'}
+                            <ChevronDown className="size-4" />
+                        </button>
+                    }
+                    panel={<RenderSchemaElements elements={element.children} assignIds={assignIds} />}
+                />
             );
         }
     }

@@ -2,13 +2,45 @@ import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { DeviceIdEnums } from '@/components/header/devices';
 import { resolveStyles } from '@/lib/responsive-styles';
-import type { CanvasSchema } from '@/lib/schema';
+import type { ElementSchema, CanvasSchema } from '@/lib/schema';
 import { RenderSchemaElements } from '@/app/site/[id]/render-schema';
 import { captureScreenshot } from './capture-screenshot';
 
 // 縮圖固定用這個寬度渲染，不吃使用者視窗大小或編輯器目前的裝置預覽寬度，
 // 每次存檔拍出來的桌面版縮圖尺寸才會一致。
 const DESKTOP_SNAPSHOT_WIDTH = 1440;
+
+// RenderSchemaElement 對桌面版只解析 base 這層樣式，navbar 設成 Fixed 時
+// base.position 就是 'fixed'。position:fixed 是相對「瀏覽器視窗」定位，
+// 下面離屏容器雖然自己也是 position:fixed，但一個 fixed 元素不會自動變成
+// 後代 fixed 元素的定位基準（只有 transform/filter/contain:paint 這類屬性
+// 才會）——所以會直接貼到使用者真正瀏覽器視窗的左上角，截圖過程中短暫閃現。
+// 縮圖本來就是靜態圖片，「捲動時固定在頂端」在這裡沒有意義，直接把 fixed
+// 相關樣式拿掉，讓它照文件順序渲染（通常就在頁面最上方），縮圖也更準確。
+function stripFixedPosition(elements: ElementSchema[]): ElementSchema[] {
+    return elements.map((element) => {
+        let next = element;
+        if (element.styles?.base?.position === 'fixed') {
+            next = {
+                ...element,
+                styles: {
+                    ...element.styles,
+                    base: {
+                        ...element.styles.base,
+                        position: undefined,
+                        top: undefined,
+                        left: undefined,
+                        zIndex: undefined,
+                    },
+                },
+            };
+        }
+        if ('children' in next) {
+            next = { ...next, children: stripFixedPosition(next.children) };
+        }
+        return next;
+    });
+}
 
 // 存檔縮圖一律拍「桌面版」畫面，但又不能直接把使用者正在編輯/預覽的畫面切成
 // 桌面模式再截圖——那樣使用者會看到畫面閃一下切裝置。改成借用公開站台
@@ -32,7 +64,7 @@ export async function captureDesktopScreenshot(schema: CanvasSchema): Promise<Bl
                 <div
                     style={resolveStyles(schema.body?.styles, DeviceIdEnums.desktop) as React.CSSProperties}
                 >
-                    <RenderSchemaElements elements={schema.elements} />
+                    <RenderSchemaElements elements={stripFixedPosition(schema.elements)} />
                 </div>
             );
         });

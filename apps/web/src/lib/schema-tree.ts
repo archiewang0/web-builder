@@ -171,10 +171,9 @@ export function buildElementMap(
                 depth: depth,
             });
 
-            // 如果是 Container，遞歸處理子元素
-            if (element.elementType === ElementTypeEnums.container) {
-                const containerElement = element as ContainerElementSchema;
-                traverse(containerElement.children, containerElement, elementPath, depth + 1);
+            // 如果是「能裝小孩」的類型（container、dropdownMenu...），遞歸處理子元素
+            if (isParentCapableElementType(element.elementType) && 'children' in element) {
+                traverse(element.children, element as ContainerElementSchema, elementPath, depth + 1);
             }
         });
     }
@@ -184,10 +183,21 @@ export function buildElementMap(
     return map;
 }
 
-// 判斷某個 id 指到的元素是不是 container——一律查 elementMap（schema 本身的資料），
-// 不要另外從 DOM／dnd-kit droppable 掛的 data 猜。拖曳過程中 (handleDragMove) 跟
-// 放手那一刻 (insertElement/computeReorder) 都要用同一份依據判斷，才不會兩邊各自
-// 維護一套「target 是不是 container」的邏輯、算出不一致的結果。
+// 「能不能裝小孩」的判斷集中在這一個函式——目前是 container 跟 dropdownMenu，
+// 之後 tabs/carousel 這類也需要收放子元素的話，只要改這裡，不用到處找哪個地方
+// 還在用 `elementType === ElementTypeEnums.container` 判斷合法拖放目標
+// （buildElementMap 的遞迴觸發、isContainerElement、use-schema-store 的
+// addElement、sidebar tree-node 的 hasChildren 都呼叫這個函式）。
+export function isParentCapableElementType(elementType: ElementTypeEnums): boolean {
+    return elementType === ElementTypeEnums.container || elementType === ElementTypeEnums.dropdownMenu;
+}
+
+// 判斷某個 id 指到的元素是不是合法的拖放容器——一律查 elementMap（schema 本身的
+// 資料），不要另外從 DOM／dnd-kit droppable 掛的 data 猜。拖曳過程中
+// (handleDragMove) 跟放手那一刻 (insertElement/computeReorder) 都要用同一份
+// 依據判斷，才不會兩邊各自維護一套「target 是不是合法容器」的邏輯、算出不一致
+// 的結果。
 export function isContainerElement(elementMap: Map<string, ElementMapNode>, id: string): boolean {
-    return elementMap.get(id)?.element.elementType === ElementTypeEnums.container;
+    const elementType = elementMap.get(id)?.element.elementType;
+    return elementType !== undefined && isParentCapableElementType(elementType);
 }

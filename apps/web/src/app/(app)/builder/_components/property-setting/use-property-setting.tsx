@@ -14,6 +14,31 @@ import { useDebouncedCallback } from '@/app/(app)/builder/_hooks/use-debounce';
 import { resolveStyles, writeStyles } from '@/lib/responsive-styles';
 import { StyleChangeHandler } from '../../_types/property-setting-types';
 
+// 「隱藏」用 styles.display = 'none' 表示（這個欄位目前沒有其他功能在用，
+// 版面的 flex/grid 是靠 Tailwind class 決定，不是 inline style）。取消隱藏
+// 不能只是把 display 寫回 undefined——buildResponsiveCss 會把值是
+// undefined 的屬性直接濾掉、不產生任何 CSS 覆寫規則，沒辦法蓋掉「更外層裝置
+// 已經設過 display:none」的情況（例如桌面隱藏、手機才顯示）。所以顯示時要寫
+// 一個跟這個元素目前版面一致的具體值，才蓋得過去、editor 跟正式站台才會一致。
+function getNaturalDisplay(element: ElementSchema | null): string {
+    if (!element) return 'block';
+    if (element.elementType === ElementTypeEnums.container) {
+        if (element.columns === undefined) return 'flex';
+        if (element.columns > 1) return 'grid';
+        return 'block';
+    }
+    // button／dropdownMenu 的觸發鈕、image 都是內容撐開大小的元素，用
+    // inline-block 而不是 block，避免顯示回來後突然被撐成滿版寬度。
+    if (
+        element.elementType === ElementTypeEnums.button ||
+        element.elementType === ElementTypeEnums.dropdownMenu ||
+        element.elementType === ElementTypeEnums.image
+    ) {
+        return 'inline-block';
+    }
+    return 'block';
+}
+
 export function usePropertySetting() {
     const activeDevice = useHeaderStore((state) => state.activeDevice);
     const getElementById = useSchemaStore((state) => state.getElementById);
@@ -140,11 +165,23 @@ export function usePropertySetting() {
         }
     };
 
-    // columns（grid）與 justifyContent（flex）互斥：切換其中一個時，另一個自動清成 undefined
+    // columns（grid）與 justifyContent（flex）互斥：切換其中一個時，另一個自動清成 undefined。
+    // 如果目前這層的 display 是「顯示用」的具體值（不是 hidden 開關寫的 'none'），
+    // 版面模式改變後這個值要一起同步，不然會變成孤兒設定跟新版面衝突
+    // （見上面 getNaturalDisplay 的說明）。
+    const syncedDisplay = (nextElement: ElementSchema) =>
+        localStyles.display && localStyles.display !== 'none'
+            ? getNaturalDisplay(nextElement)
+            : localStyles.display;
+
     const handleColumnsChange = (columns: number) => {
-        if (!selectedElement) return;
-        setLocalStyles({ ...localStyles, justifyContent: undefined });
-        const newStyles = writeStyles(element?.styles, activeDevice, { justifyContent: undefined });
+        if (!selectedElement || !element) return;
+        const display = syncedDisplay({ ...element, columns } as ElementSchema);
+        setLocalStyles({ ...localStyles, justifyContent: undefined, display });
+        const newStyles = writeStyles(element?.styles, activeDevice, {
+            justifyContent: undefined,
+            display,
+        });
         lastWrittenStylesRef.current = newStyles;
         lastWrittenDeviceRef.current = activeDevice;
         updateElement(selectedElement, {
@@ -154,9 +191,10 @@ export function usePropertySetting() {
     };
 
     const handleFlexAlignChange = (justifyContent: string) => {
-        if (!selectedElement) return;
-        setLocalStyles({ ...localStyles, justifyContent });
-        const newStyles = writeStyles(element?.styles, activeDevice, { justifyContent });
+        if (!selectedElement || !element) return;
+        const display = syncedDisplay({ ...element, columns: undefined } as ElementSchema);
+        setLocalStyles({ ...localStyles, justifyContent, display });
+        const newStyles = writeStyles(element?.styles, activeDevice, { justifyContent, display });
         lastWrittenStylesRef.current = newStyles;
         lastWrittenDeviceRef.current = activeDevice;
         updateElement(selectedElement, {
@@ -165,11 +203,13 @@ export function usePropertySetting() {
         } as Partial<ContainerElementSchema>);
     };
 
-    const elementType = isBodySelected
-        ? ElementTypeEnums.body
-        : element
-          ? ElementTypeEnums[element.elementType]
-          : null;
+    // 顯示/隱藏開關：隱藏永遠寫 'none'；顯示要寫一個跟目前版面一致的具體值
+    // （不能寫 undefined，理由見上面 getNaturalDisplay 的註解）。
+    const handleVisibilityChange = (hidden: boolean) => {
+        handleStyleChange({ display: hidden ? 'none' : getNaturalDisplay(element) });
+    };
+
+    const elementType = isBodySelected ? ElementTypeEnums.body : element ? element.elementType : null;
     const containerColumns =
         element && 'columns' in element ? (element as ContainerElementSchema).columns : undefined;
 
@@ -181,6 +221,7 @@ export function usePropertySetting() {
         localContent,
         localStyles,
         localHref,
+        activeDevice,
         handleDelete,
         handleContentChange,
         handleContentValueChange,
@@ -188,5 +229,6 @@ export function usePropertySetting() {
         handleHrefChange,
         handleColumnsChange,
         handleFlexAlignChange,
+        handleVisibilityChange,
     };
 }

@@ -15,6 +15,8 @@ function getElementTypeName(elementType: ElementTypeEnums): string {
             return '按鈕 (Button)';
         case ElementTypeEnums.container:
             return '容器 (Container)';
+        case ElementTypeEnums.dropdownMenu:
+            return '下拉選單 (Dropdown Menu)';
         default:
             return '未知元素';
     }

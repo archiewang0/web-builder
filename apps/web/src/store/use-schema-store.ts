@@ -1,12 +1,6 @@
 import { create } from 'zustand';
-import {
-    ElementTypeEnums,
-    ElementSchema,
-    ContainerElementSchema,
-    StylesSchema,
-    CanvasSchema,
-} from '@/lib/schema';
-import { buildElementMap, ElementMapNode } from '@/lib/schema-tree';
+import { ElementSchema, ContainerElementSchema, StylesSchema, CanvasSchema } from '@/lib/schema';
+import { buildElementMap, ElementMapNode, isParentCapableElementType } from '@/lib/schema-tree';
 
 interface SchemaStore {
     schema: CanvasSchema;
@@ -94,7 +88,7 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
     addElement: (element, parentId) => {
         if (parentId) {
             const parentNode = get().elementMap.get(parentId);
-            if (!parentNode || parentNode.element.elementType !== ElementTypeEnums.container) {
+            if (!parentNode || !isParentCapableElementType(parentNode.element.elementType)) {
                 return;
             }
 

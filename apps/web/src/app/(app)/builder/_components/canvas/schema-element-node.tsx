@@ -9,7 +9,13 @@ import { useSelectedElementStore } from '@/store/use-selected-element-store';
 import { useHeaderStore } from '@/store/use-header-store';
 import { ElementTypeEnums, ElementSchema } from '@/lib/schema';
 import { resolveStyles, writeStyles } from '@/lib/responsive-styles';
-import { ButtonElement, ContainerElement, ImgElement, TextElement } from './elements';
+import {
+    ButtonElement,
+    ContainerElement,
+    DropdownMenuElement,
+    ImgElement,
+    TextElement,
+} from './elements';
 import type { DropPosition } from '@/lib/schema-tree';
 
 export interface DragVisualState {
@@ -63,6 +69,16 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
     const isBeingDragged = data.id === activeId;
     const isDropTarget = data.id === overId && data.id !== activeId;
 
+    const resolvedStyle = resolveStyles(data.styles, activeDevice) as React.CSSProperties;
+    // 「這個裝置隱藏」是 VisibilitySetting 寫進 styles.display 的 'none'，見
+    // use-property-setting.tsx 的 handleVisibilityChange 註解。編輯模式下不
+    // 真的用 display:none 讓元素消失——不然沒辦法點選/拖曳/編輯它，只能靠
+    // 結構樹才找得到——改成半透明＋小標籤呈現「這個裝置會被隱藏」，選取/拖曳
+    // 邏輯完全不受影響。只有切到「預覽模式」才真的套用 display:none，準確
+    // 模擬正式站台在這個裝置下的樣子。
+    const isHiddenOnDevice = resolvedStyle.display === 'none';
+    const showHiddenGhost = isHiddenOnDevice && !isPreviewMode;
+
     const elementProperty = {
         ['data-element-type']: data.elementType,
         ['data-element-id']: data.id,
@@ -82,13 +98,20 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
             // before/after 是插入線：在 target 的上緣／下緣畫一條粗線，
             // 提示放手後會插在它的前面還是後面，而不是塞進它裡面。
             isDropTarget && dropPosition === 'before' && 'relative border-t-4 border-t-blue-500',
-            isDropTarget && dropPosition === 'after' && 'relative border-b-4 border-b-blue-500'
+            isDropTarget && dropPosition === 'after' && 'relative border-b-4 border-b-blue-500',
+            // 用 ::before 的 content 掛一個小標籤，不用另外在 5 種元件裡各自加一個
+            // DOM 節點——加一個真的 sibling 節點會多佔一個 flex/grid 欄位，
+            // 破壞版面（跟 img-element 註解裡「不能直接回傳 null」是同一個顧慮）。
+            showHiddenGhost &&
+                "relative before:absolute before:left-0 before:top-0 before:z-20 before:whitespace-nowrap before:rounded before:bg-amber-100 before:px-1 before:text-[10px] before:text-amber-700 before:content-['已隱藏']"
         ),
         ref: setNodeRef,
         ...attributes,
         ...listeners,
         style: {
-            ...(resolveStyles(data.styles, activeDevice) as React.CSSProperties),
+            ...resolvedStyle,
+            display: showHiddenGhost ? undefined : resolvedStyle.display,
+            opacity: showHiddenGhost ? 0.4 : resolvedStyle.opacity,
             transform: transform ? CSS.Translate.toString(transform) : undefined,
             ...(isBeingDragged ? { opacity: 0.4 } : {}),
         },
@@ -164,6 +187,26 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
                     id={data.id}
                     elementProperty={elementProperty}
                     columns={data.columns}
+                    SchemaElementRender={(child) => (
+                        <SchemaElementNode
+                            key={child.id}
+                            data={child}
+                            isPreviewMode={isPreviewMode}
+                            dragState={dragState}
+                        />
+                    )}
+                    childrenElements={data.children}
+                    isPreviewMode={isPreviewMode}
+                />
+            );
+
+        case ElementTypeEnums.dropdownMenu:
+            return (
+                <DropdownMenuElement
+                    key={data.id}
+                    id={data.id}
+                    elementProperty={elementProperty}
+                    content={data.content}
                     SchemaElementRender={(child) => (
                         <SchemaElementNode
                             key={child.id}

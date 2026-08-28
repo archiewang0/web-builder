@@ -82,7 +82,16 @@ export function ContainerElement({
                 ref={mergedRef}
                 className={classNames(
                     getContainerBaseClassName({ isFlexMode, columns }),
-                    'pointer-events-auto transition-all',
+                    'pointer-events-auto',
+                    // fixed 元素的 top/left/width 是 useCanvasFixedBounds 用
+                    // ResizeObserver 即時量測裝置外框算出來的——裝置外框切換時本身
+                    // 有 transition-all duration-300（見 canvas/index.tsx）在動畫縮放，
+                    // 如果這裡也留著 transition-all，元素自己的 top/left/width 又會
+                    // 對每一次量測結果各自拉一段 CSS 過渡，兩層動畫疊在一起，切裝置
+                    // 時看起來會「先delay、才慢慢貼齊裝置框」。fixed 元素要跟著外框
+                    // 即時對齊，不對這幾個屬性做動畫；其餘一般元素維持原本的
+                    // transition-all（hover/選取樣式切換用）。
+                    !isFixed && 'transition-all',
                     !isPreviewMode &&
                         ' p-3 border-2 border-dashed hover:shadow-md cursor-pointer rounded-lg',
                     !isPreviewMode && (elementProperty['selected-style'] || 'border-gray-200'),

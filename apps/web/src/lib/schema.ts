@@ -7,6 +7,7 @@ export enum ElementTypeEnums {
     image = 'image',
     button = 'button',
     container = 'container',
+    dropdownMenu = 'dropdown-menu',
     body = 'body',
 }
 
@@ -93,8 +94,18 @@ export interface ContainerElementSchema extends BaseElementSchema {
     variant?: PresetIdEnums;
 }
 
-// 聯合類型：元素可以是 Leaf 或 Container
-export type ElementSchema = LeafElementSchema | ContainerElementSchema;
+// Dropdown Menu 元件：外殼（觸發鈕＋開合互動）是固定的，交給正式站台的
+// Radix DropdownMenu 處理；children 是使用者自由拖拽進來的內容（button/text/
+// container 都可以），編輯器裡永遠展開可編輯，只有正式站台才會真的收合。
+export interface DropdownMenuElementSchema extends BaseElementSchema {
+    elementType: ElementTypeEnums.dropdownMenu;
+    // 觸發鈕文字，跟 button 的 content 是同一種用法，沿用既有 ContentTextarea。
+    content?: string;
+    children: ElementSchema[];
+}
+
+// 聯合類型：元素可以是 Leaf、Container 或 DropdownMenu
+export type ElementSchema = LeafElementSchema | ContainerElementSchema | DropdownMenuElementSchema;
 
 // Body：畫布的根背景層，每份頁面固定只有一個。不進 elements 陣列，
 // 不能拖曳新增也不能刪除，只提供背景色／背景圖設定，沿用既有的 BackgroundSetting UI。

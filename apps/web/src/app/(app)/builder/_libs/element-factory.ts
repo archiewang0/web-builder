@@ -19,6 +19,11 @@ export function createElement(
     if (elementType === ElementTypeEnums.container) {
         return { id, elementType, order, columns: 1, position, children: [] };
     }
+    if (elementType === ElementTypeEnums.dropdownMenu) {
+        // 外殼（觸發鈕＋開合互動）固定，children 留空讓使用者自己拖東西進去，
+        // 見 schema.ts 的 DropdownMenuElementSchema 註解。
+        return { id, elementType, order, position, content: '選單', children: [] };
+    }
     const contentMap: Partial<Record<ElementTypeEnums, string>> = {
         [ElementTypeEnums.text]: '新增文字',
         [ElementTypeEnums.button]: '按鈕',

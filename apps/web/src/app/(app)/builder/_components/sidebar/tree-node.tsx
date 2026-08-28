@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ElementTypeEnums, ElementSchema } from '@/lib/schema';
+import { isParentCapableElementType } from '@/lib/schema-tree';
 import {
     ChevronDown,
     ChevronRight,
     Image,
     Layers,
+    Menu,
     MousePointer2,
     Square,
     Type,
@@ -29,6 +31,8 @@ function getElementIcon(elementType: ElementTypeEnums) {
             return MousePointer2;
         case ElementTypeEnums.container:
             return Layers;
+        case ElementTypeEnums.dropdownMenu:
+            return Menu;
         default:
             return Square;
     }
@@ -45,6 +49,8 @@ function getElementName(element: ElementSchema): string {
             return '按鈕';
         case ElementTypeEnums.container:
             return '容器';
+        case ElementTypeEnums.dropdownMenu:
+            return '下拉選單';
         default:
             return '元素';
     }
@@ -60,7 +66,7 @@ export function TreeNode({ element, depth, expandSignal }: TreeNodeProps) {
     }, [expandSignal]);
     const Icon = getElementIcon(element.elementType);
     const hasChildren =
-        element.elementType === ElementTypeEnums.container &&
+        isParentCapableElementType(element.elementType) &&
         'children' in element &&
         element.children.length > 0;
     const isSelected = selectedElement === element.id;
