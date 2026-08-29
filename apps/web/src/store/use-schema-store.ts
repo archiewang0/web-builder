@@ -133,6 +133,8 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
 declare global {
     interface Window {
         printSchema: () => void;
+        loadSchema: (schema: CanvasSchema) => void;
+        appendElements: (elements: ElementSchema[]) => void;
     }
 }
 
@@ -140,5 +142,17 @@ declare global {
 if (typeof window !== 'undefined') {
     window.printSchema = () => {
         console.log(JSON.parse(JSON.stringify(useSchemaStore.getState().schema)));
+    };
+    // 開發／手動組 schema 用：在 console 打 window.loadSchema(schema) 直接把整份
+    // schema 換掉，畫布會立刻照新內容重繪——貼完記得按「儲存」才會真的存進資料庫，
+    // 這裡只是換掉編輯中的畫布狀態，跟正常編輯操作沒有兩樣。
+    window.loadSchema = (schema) => {
+        useSchemaStore.getState().setSchema(schema);
+    };
+    // 只想在現有畫布最後面加幾個新的根層級區塊時用這個，不用重貼整份 schema：
+    // window.appendElements([block1, block2, ...])。
+    window.appendElements = (elements) => {
+        const store = useSchemaStore.getState();
+        store.setSchema({ ...store.schema, elements: [...store.schema.elements, ...elements] });
     };
 }

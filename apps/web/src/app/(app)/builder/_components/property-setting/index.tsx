@@ -6,6 +6,7 @@ import { EditSchemaConstructor } from './edit-schema';
 import { ContentTextarea } from './content-textarea';
 import { ElementId } from './element-id';
 import { ElementType } from './element-type';
+import { ElementVariant } from './element-variant';
 import { MarginSetting } from './margin-setting';
 import { PaddingSetting } from './padding-setting';
 import { BorderSetting } from './border-setting';
@@ -74,6 +75,9 @@ export function PropertySetting() {
                                 <div className="space-y-6">
                                     <ElementId id={element.id} />
                                     <ElementType elementType={element.elementType} />
+                                    {'variant' in element && element.variant && (
+                                        <ElementVariant variant={element.variant} />
+                                    )}
                                     <VisibilitySetting
                                         display={localStyles.display}
                                         activeDevice={activeDevice}
