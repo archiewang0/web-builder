@@ -7,6 +7,7 @@ import { useSchemaStore } from '@/store/use-schema-store';
 import { usePendingUploadStore } from '@/store/use-pending-upload-store';
 import { usePageTitleStore } from '@/store/use-page-title-store';
 import { usePageVisibilityStore } from '@/store/use-page-visibility-store';
+import { useDialogStore } from '@/store/use-dialog-store';
 import { collectBlobUrls, replaceBlobUrls } from '@/app/(app)/builder/_libs/resolve-pending-images';
 import { validatePageTitle } from '@/lib/validate-page-title';
 import { captureDesktopScreenshot } from '@/app/(app)/builder/_libs/capture-desktop-screenshot';
@@ -43,6 +44,9 @@ export function useSavePage() {
         setTitleError(null);
 
         setStatus('saving');
+        // 全螢幕遮罩 + loading dialog：儲存/上傳整段期間都蓋住畫面，不能手動關掉，
+        // 結束後（成功或失敗）再呼叫一次 open() 換成最終畫面，見下面兩處。
+        useDialogStore.getState().open({ title: '正在儲存...', loading: true });
         try {
             const schema = useSchemaStore.getState().schema;
             const pending = usePendingUploadStore.getState().pending;
@@ -99,16 +103,45 @@ export function useSavePage() {
 
             setStatus('saved');
 
-            // 公開頁面存檔成功後，另開一個分頁直接看發布結果（/site/[id]，跟公開頁共用同一份唯讀渲染）。
-            // 私密頁面訪問 /site/[id] 只會看到「尚未公開」，開了也沒意義，所以不開。
+            // 公開頁面存檔成功後在 dialog 上直接顯示發布網址（/site/[id]，跟公開頁
+            // 共用同一份唯讀渲染），使用者自己點連結開新分頁看，不用自動幫他跳頁。
+            // 私密頁面訪問 /site/[id] 只會看到「尚未公開」，不顯示連結，只提示上傳成功。
             if (isPublic) {
-                const newTab = window.open('about:blank', '_blank');
-                if (newTab) newTab.location.href = `/site/${params.id}`;
+                const siteUrl = `${window.location.origin}/site/${params.id}`;
+                useDialogStore.getState().open({
+                    title: '已發布成功',
+                    description: '你的網頁已經上線，點擊下方連結查看：',
+                    content: (
+                        <a
+                            href={siteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-3 block truncate rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-blue-600 hover:underline"
+                        >
+                            {siteUrl}
+                        </a>
+                    ),
+                    confirmText: '完成',
+                    showCancel: false,
+                });
+            } else {
+                useDialogStore.getState().open({
+                    title: '上傳成功',
+                    description: '這個頁面目前是私密狀態，只有你自己看得到。',
+                    confirmText: '完成',
+                    showCancel: false,
+                });
             }
 
             return true;
         } catch {
             setStatus('error');
+            useDialogStore.getState().open({
+                title: '儲存失敗',
+                description: '請稍後再試一次。',
+                confirmText: '確定',
+                showCancel: false,
+            });
             return false;
         }
     };

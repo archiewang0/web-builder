@@ -1,13 +1,19 @@
 import { create } from 'zustand';
+import type { ReactNode } from 'react';
 
 export interface DialogOptions {
     title: string;
     description?: string;
+    /** description 下面、按鈕列上面的自訂內容（例如可點擊的發布連結）。 */
+    content?: ReactNode;
+    /** loading 模式：只顯示 spinner + title/description，沒有叉叉/按鈕，不能手動關閉——
+     *  呼叫端要自己再呼叫一次 open() 換成最終畫面才會離開這個狀態。 */
+    loading?: boolean;
     confirmText?: string;
     cancelText?: string;
-    /** 右上角叉叉，預設顯示 */
+    /** 右上角叉叉，預設顯示（loading 模式下永遠不顯示） */
     showClose?: boolean;
-    /** 取消按鈕，預設顯示 */
+    /** 取消按鈕，預設顯示（loading 模式下永遠不顯示） */
     showCancel?: boolean;
     /** 確認按鈕改用紅色（危險操作，例如刪除） */
     danger?: boolean;
