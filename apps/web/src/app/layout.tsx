@@ -54,7 +54,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html suppressHydrationWarning lang="en">
             <body
                 className={`h-screen flex flex-col ${geistSans.variable} ${geistMono.variable} ${inter.variable} ${roboto.variable} ${poppins.variable} ${playfairDisplay.variable} ${montserrat.variable}`}
                 suppressHydrationWarning

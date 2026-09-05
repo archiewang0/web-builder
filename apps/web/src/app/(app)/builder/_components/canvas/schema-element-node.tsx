@@ -34,9 +34,11 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
     const updateElement = useSchemaStore((state) => state.updateElement);
     const selectedElement = useSelectedElementStore((state) => state.selectedElement);
     const setSelectedElement = useSelectedElementStore((state) => state.setSelectedElement);
+    const editingElement = useSelectedElementStore((state) => state.editingElement);
     const activeDevice = useHeaderStore((state) => state.activeDevice);
 
     const isSelected = data.id === selectedElement;
+    const isEditing = data.id === editingElement;
 
     // 文字選取後會進入 contentEditable 編輯狀態，這裡不整個停用拖曳——而是保持
     // useDraggable 一直是 enabled，改由 TextElement 自己決定要不要把 onPointerDown
@@ -131,6 +133,7 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
                     elementProperty={elementProperty}
                     content={data.content}
                     isSelected={isSelected}
+                    isEditing={isEditing}
                     onContentChange={(content) =>
                         updateElement(data.id, { content } as Partial<ElementSchema>)
                     }
@@ -177,6 +180,11 @@ export function SchemaElementNode({ data, isPreviewMode, dragState }: SchemaElem
                     content={data.content}
                     href={data.href}
                     isPreviewMode={isPreviewMode}
+                    isSelected={isSelected}
+                    isEditing={isEditing}
+                    onContentChange={(content) =>
+                        updateElement(data.id, { content } as Partial<ElementSchema>)
+                    }
                 />
             );
 
